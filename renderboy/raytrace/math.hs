@@ -1,5 +1,7 @@
 module Math where
 
+import Debug.Trace
+
 toRad :: Double -> Double
 toRad deg = deg * pi / 180
 
@@ -189,7 +191,7 @@ matmul lhs rhs = makeMat4RowMajorFromList $ concatMap (computeRow lhs rhs) [0..3
         computeRow lhs rhs r = map (\c -> sum $ prod (row r lhs) (col c rhs)) [0..3]
 
 instance Ops Mat4 where
-  a |*| m = makeMat4FromList $ map (* a) (mat4ToList m)
+  a |*| m = makeMat4RowMajorFromList $ map (* a) (mat4ToList m)
   dot = undefined
   cross = undefined
 
@@ -248,19 +250,19 @@ det mat
   + m02 mat * (det3 $ makeMat4RowMajorFromList (concatMap (\r -> rowWithoutCol r 2 mat) [1,2,3] ++ [0,0,0,0]))
   - m03 mat * (det3 $ makeMat4RowMajorFromList (concatMap (\r -> rowWithoutCol r 3 mat) [1,2,3] ++ [0,0,0,0]))
 
-trace mat
+tr mat
   = (m00 mat) + (m11 mat) + (m22 mat) + (m33 mat)
 
 -- caley hamilton decomposition to find inverse of a matrix
 caleyhamilton :: Mat4 -> Mat4
 caleyhamilton a
   = let d = det a
-        t = trace a
-        t2 = trace (a*a)
-        t3 = trace (a*a*a)
-        a' = (t*t*t) - (3*t*t2) + (2*t3)
-        b' = (t*t) - t2
-    in if d /= 0 then (1/d) |*| ((a'/6) |*| identity4 - (b'/2) |*| a + (t|*|(a*a)) - (a*a*a))
+        t = tr a
+        t2 = tr (a*a)
+        t3 = tr (a*a*a)
+        a' = (1/6) * ((t*t*t) - (3*t*t2) + (2*t3))
+        b' = (1/2) * ((t*t) - t2)
+    in if d /= 0 then (1/d) |*| (a' |*| identity4 - b' |*| a + (t|*|(a*a)) - (a*(a*a)))
                  else error "matrix is singular"
 
 inv :: Mat4 -> Mat4
