@@ -273,14 +273,15 @@ data Ray = Ray { start :: Point3
                } deriving (Show)
 
 data Sphere = Sphere { center :: Point3
-                     , radius :: Double } deriving (Show)
+                     , radius :: Double
+                     , transform :: Mat4 } deriving (Show)
 
 type Shape = Sphere
 
 data IntersectResult = NoHit | Hit [(Double, Point3, Vec4)]
 
 intersect :: Ray -> Shape -> IntersectResult
-intersect Ray {start = s, direction = v} Sphere { center = ct, radius = r } =
+intersect Ray {start = s, direction = v} Sphere { center = ct, radius = r, transform = _ } =
   let  a = lensq v -- == 1
        b = 2 * dot (toPoint v) (s - ct)
        c = lensq (fromPoint s - fromPoint ct) - r * r

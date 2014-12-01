@@ -367,7 +367,7 @@ params cmds = let defaultMaterial = Material { kd = makeColor 0 0 0 1, ks = make
                                        CmdOutput f -> f
                                        otherwise   -> out p
                               objs' = case c of
-                                       CmdSphere x y z r -> (Sphere { center = Point3 x y z, radius = r }, mat): objs p
+                                       CmdSphere x y z r -> (Sphere { center = Point3 x y z, radius = r, transform = head xforms }, mat): objs p
                                        otherwise -> objs p
                               mat' = case c of
                                        CmdDiffuse r g b  -> Material { kd = makeColor (double2Float r) (double2Float g) (double2Float b) 1, ks = ks mat, sh = sh mat, ke = ke mat }
