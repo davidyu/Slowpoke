@@ -1,5 +1,5 @@
 # this is a test file
-size 256 256
+size 100 100
 camera 0 0 0 0 0 -0.2 0 1 0 45
 diffuse 0.1 1 0
 sphere 0 0 -9 1

@@ -272,6 +272,12 @@ data Ray = Ray { start :: Point3
                , direction :: Vec4
                } deriving (Show)
 
+-- applies transform t to ray r
+-- make sure we are applying mat4 without translation to vec4
+apply :: Mat4 -> Ray -> Ray
+apply t r = Ray { start = (start r) + (Point3 (tx t) (ty t) (tz t)),
+                  direction = vecmat (direction r) t }
+
 data Sphere = Sphere { center :: Point3
                      , radius :: Double
                      , transform :: Mat4 } deriving (Show)
@@ -281,8 +287,9 @@ type Shape = Sphere
 data IntersectResult = NoHit | Hit [(Double, Point3, Vec4)]
 
 intersect :: Ray -> Shape -> IntersectResult
-intersect Ray {start = s, direction = v} Sphere { center = ct, radius = r, transform = _ } =
-  let  a = lensq v -- == 1
+intersect ray Sphere { center = ct, radius = r, transform = xf } =
+  let  Ray {start = s, direction = v} = apply (inv xf) ray
+       a = lensq v -- == 1
        b = 2 * dot (toPoint v) (s - ct)
        c = lensq (fromPoint s - fromPoint ct) - r * r
   in getRaySphereXSection a b c (b * b - 4 * a * c) ct s v
