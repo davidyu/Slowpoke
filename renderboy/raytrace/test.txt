@@ -1,0 +1,13 @@
+# this is a test file
+size 100 100
+camera 0 0 0 0 0 -0.2 0 1 0 45
+diffuse 0.1 1 0
+sphere 0 0 -9 1
+diffuse 0.5 0 0
+specular 0.0 0.5 0
+shininess 3
+sphere 2 1 -10 1
+ambient 0.1 0 0
+directional 1 0 0 0.5 0 0
+point 0 1 0 0 0.5 0
+output display
