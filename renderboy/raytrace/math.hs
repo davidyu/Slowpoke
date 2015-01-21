@@ -278,11 +278,9 @@ apply :: Mat4 -> Ray -> Ray
 apply t r = Ray { start = (start r) + (Point3 (tx t) (ty t) (tz t)),
                   direction = vecmat (direction r) t }
 
-data Sphere = Sphere { center :: Point3
-                     , radius :: Double
-                     , transform :: Mat4 } deriving (Show)
-
-type Shape = Sphere
+data Shape = Sphere { center :: Point3 , radius :: Double , transform :: Mat4 }
+           | Triangle { v1 :: Point3 , v2 :: Point3 , v3 :: Point3 }
+             deriving (Show)
 
 data IntersectResult = NoHit | Hit [(Double, Point3, Vec4)]
 
@@ -302,10 +300,21 @@ intersect ray Sphere { center = ct, radius = r, transform = xf } =
                     p2 = s + t2 |*| toPoint v
                     n1 = normalize $ fromPoint (p1 - ct)
                     n2 = normalize $ fromPoint (p2 - ct)
-                in Hit [ (t1, p1, n1), (t2, p2, n2)]
+                in trace ("normal: " ++ show n1 ++ "\t\tp: " ++ show p1) (Hit [ (t1, p1, n1), (t2, p2, n2)])
               | otherwise =
                 let t = ( -b ) / ( 2 * a )
                     p = s + t |*| toPoint v
                     n = normalize $ fromPoint (p - ct)
-                in Hit [ (t, p, n) ]
+                in trace (show n) (Hit [ (t, p, n) ])
            epsilon = 0.0001
+intersect ray Triangle { v1 = v1, v2 = v2, v3 = v3 } =
+  let Ray { start = o, direction = d } = ray
+      e1 = v2 - v1
+      e2 = v3 - v1
+      n = e1 `cross` e2
+      s = o - v1
+      m = s `cross` (toPoint d)
+      Point3 t u v = (1/(-(n `dot` (toPoint d)))) |*| Point3 (n `dot` s) (m `dot` e2) ((-m) `dot` e1)
+  in if inRange u && inRange v then Hit [(t, o + t |*| toPoint d, normalize $ fromPoint n)] else NoHit
+    where inRange x = x >= 0.0 && x <= 1.0
+
