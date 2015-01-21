@@ -2,6 +2,8 @@ module Parser where
 
 import Control.Monad
 import Control.Applicative hiding ((<|>), many)
+import qualified Data.Vector as V
+import Data.Vector ((!))
 import GHC.Float
 import Text.Parsec
 import Text.Parsec.String
@@ -340,6 +342,7 @@ data Params = Params { cam :: Camera
                      , out :: String
                      , objs :: [(Shape, Material)]
                      , rig :: Rig
+                     , vxs :: V.Vector Point3
                      } deriving (Show)
 
 params :: [Command] -> Params
@@ -352,6 +355,7 @@ params cmds = let defaultMaterial = Material { kd = makeColor 0 0 0 1, ks = make
                                                      , att = LightAttenuation { constantLightAttenuation = 1, linearLightAttenuation = 0, quadraticLightAttenuation = 0 }
                                                      , lights = []
                                                      }
+                                         , vxs = V.empty
                                          }
               in buildParam cmds [identity4] defaultMaterial defaultParams
                   where buildParam :: [Command] -> [Mat4] -> Material -> Params -> Params
@@ -368,6 +372,10 @@ params cmds = let defaultMaterial = Material { kd = makeColor 0 0 0 1, ks = make
                                        otherwise   -> out p
                               objs' = case c of
                                        CmdSphere x y z r -> (Sphere { center = Point3 x y z, radius = r, transform = head xforms }, mat): objs p
+                                       CmdTri v1 v2 v3 -> let v1' = (vxs p) ! v1
+                                                              v2' = (vxs p) ! v2
+                                                              v3' = (vxs p) ! v3
+                                                          in (Triangle { v1 = v1', v2 = v2', v3 = v3' }, mat): objs p
                                        otherwise -> objs p
                               mat' = case c of
                                        CmdDiffuse r g b  -> Material { kd = makeColor (double2Float r) (double2Float g) (double2Float b) 1, ks = ks mat, sh = sh mat, ke = ke mat }
@@ -375,6 +383,9 @@ params cmds = let defaultMaterial = Material { kd = makeColor 0 0 0 1, ks = make
                                        CmdShininess s    -> Material { kd = kd mat, ks = ks mat, sh = s, ke = ke mat }
                                        CmdEmission r g b -> Material { kd = kd mat, ks = ks mat, sh = sh mat, ke = makeColor (double2Float r) (double2Float g) (double2Float b) 1 }
                                        otherwise -> mat
+                              vxs' = case c of
+                                       CmdVertex x y z -> vxs p `V.snoc` Point3 x y z
+                                       otherwise -> vxs p
                               rig' = case c of CmdAmbient r g b -> Rig { ka = makeColor (double2Float r) (double2Float g) (double2Float b) 1, att = att $ rig p, lights = lights $ rig p }
                                                CmdAttenuation c l q -> Rig { ka = ka $ rig p, att = LightAttenuation { constantLightAttenuation = c, linearLightAttenuation = l, quadraticLightAttenuation = q }, lights = lights $ rig p }
                                                CmdDirectional x y z r g b -> Rig { ka = ka $ rig p, att = att $ rig p, lights = DirectionalLight (Vec4 x y z 0) (makeColor (double2Float r) (double2Float g) (double2Float b) 1): (lights $ rig p) }
@@ -391,6 +402,7 @@ params cmds = let defaultMaterial = Material { kd = makeColor 0 0 0 1, ks = make
                                                                , out = out'
                                                                , objs = objs'
                                                                , rig = rig'
+                                                               , vxs = vxs'
                                                                }
 
 testParams :: Params
