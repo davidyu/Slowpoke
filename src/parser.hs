@@ -2,6 +2,7 @@ module Parser where
 
 import Control.Monad
 import Control.Applicative hiding ((<|>), many)
+import Debug.Trace
 import qualified Data.Vector as V
 import Data.Vector ((!))
 import GHC.Float
@@ -145,7 +146,7 @@ maxverts = do
 
 vertex :: Parser Command
 vertex = do
-  try $ string "maxverts"
+  try $ string "vertex"
   whitespace
   x <- double
   whitespace
@@ -419,4 +420,4 @@ testParamsFromFile = params <$> commands
 paramsFromFile :: String -> IO (Params)
 paramsFromFile filename = params <$> commands
   where commands = parseFromFile spec filename >>= either empty return
-        empty err = return []
+        empty err = trace (show err) return []

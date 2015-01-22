@@ -60,8 +60,8 @@ instance Num Point3
   where
     (Point3 ax ay az) + (Point3 bx by bz) = Point3 (ax + bx) (ay + by) (az + bz)
     (Point3 ax ay az) - (Point3 bx by bz) = Point3 (ax - bx) (ay - by) (az - bz)
-    (*)                                   = undefined
-    negate                                = undefined
+    (*)                                   = trace ("Point3 dot product") undefined
+    negate (Point3 x y z)                 = Point3 (-x) (-y) (-z)
     abs                                   = undefined
     signum                                = undefined
     fromInteger                           = undefined
@@ -69,7 +69,7 @@ instance Num Point3
 instance Ops Point3 where
   a |*| Point3 x y z = Point3 (a * x) (a * y) (a * z)
   dot (Point3 ax ay az) (Point3 bx by bz) = ax * bx + ay * by + az * bz
-  cross = undefined
+  cross = trace ("Point3 cross") undefined
 
 fromPoint :: Point3 -> Vec4
 fromPoint (Point3 x y z) = Vec4 x y z 1
@@ -311,10 +311,10 @@ intersect ray Triangle { v1 = v1, v2 = v2, v3 = v3 } =
   let Ray { start = o, direction = d } = ray
       e1 = v2 - v1
       e2 = v3 - v1
-      n = e1 `cross` e2
+      n = toPoint $ (fromPoint e1) `cross` (fromPoint e2)
       s = o - v1
-      m = s `cross` (toPoint d)
+      m = toPoint $ (fromPoint s) `cross` d
       Point3 t u v = (1/(-(n `dot` (toPoint d)))) |*| Point3 (n `dot` s) (m `dot` e2) ((-m) `dot` e1)
-  in if inRange u && inRange v then Hit [(t, o + t |*| toPoint d, normalize $ fromPoint n)] else NoHit
-    where inRange x = x >= 0.0 && x <= 1.0
+  in if inRange u v && t > 0 then Hit [(t, o + t |*| toPoint d, normalize $ fromPoint n)] else NoHit
+    where inRange u v = u >= 0.0 && v >= 0.0 && (u + v) <= 1.0
 
