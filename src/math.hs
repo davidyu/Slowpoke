@@ -2,6 +2,9 @@ module Math where
 
 import Debug.Trace
 
+
+epsilon = 0.0001
+
 toRad :: Double -> Double
 toRad deg = deg * pi / 180
 
@@ -306,7 +309,6 @@ intersect ray Sphere { center = ct, radius = r, transform = xf } =
                     p = s + t |*| toPoint v
                     n = normalize $ fromPoint (p - ct)
                 in trace (show n) (Hit [ (t, p, n) ])
-           epsilon = 0.0001
 intersect ray Triangle { v1 = v1, v2 = v2, v3 = v3 } =
   let Ray { start = o, direction = d } = ray
       e1 = v2 - v1
@@ -315,6 +317,5 @@ intersect ray Triangle { v1 = v1, v2 = v2, v3 = v3 } =
       s = o - v1
       m = toPoint $ (fromPoint s) `cross` d
       Point3 t u v = (1/(-(n `dot` (toPoint d)))) |*| Point3 (n `dot` s) (m `dot` e2) ((-m) `dot` e1)
-  in if inRange u v && t > 0 then Hit [(t, o + t |*| toPoint d, normalize $ fromPoint n)] else NoHit
-    where inRange u v = u >= 0.0 && v >= 0.0 && (u + v) <= 1.0
-
+  in if isBarycentric u v && t > 0 then Hit [(t, o + t |*| toPoint d, normalize $ fromPoint n)] else NoHit
+    where isBarycentric u v = u >= 0.0 && v >= 0.0 && (u + v) - 1.0 <= epsilon
