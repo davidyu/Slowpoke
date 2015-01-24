@@ -1,6 +1,6 @@
-name:                renderboy
+name:                Slowpoke
 version:             0.0.0.2
-synopsis:            The raytracing component of an amateur renderer suite
+synopsis:            A toy raytracer
 description:         It sometimes produces pretty pictures.
 license:             MIT
 author:              David Yu
@@ -11,5 +11,5 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:
-  build-depends:       base >=4.4, gloss-raster >= 1.8.2.1, JuicyPixels >= 3.1.7, parsec >= 3.1.7
+  build-depends:       base >=4.4, gloss-raster >= 1.8.2.1, gloss, JuicyPixels >= 3.1.7, parsec >= 3.1.7
   default-language:    Haskell2010
