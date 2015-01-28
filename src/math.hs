@@ -30,7 +30,7 @@ instance Num Vec4
 
 instance Ops Vec4 where
   a |*| Vec4 x y z w = Vec4 (a * x) (a * y) (a * z) (a * w)
-  dot (Vec4 ax ay az aw) (Vec4 bx by bz bw) = ax * bx + ay * by + az * bz + aw * bw
+  dot (Vec4 ax ay az aw) (Vec4 bx by bz bw) = ax * bx + ay * by + az * bz
   cross (Vec4 ax ay az aw) (Vec4 bx by bz bw) = Vec4 (ay * bz - az * by) (az * bx - ax * bz) (ax * by - ay * bx) 0
 
 lensq (Vec4 x y z _) = x * x + y * y + z * z
@@ -303,7 +303,7 @@ intersect ray Sphere { center = ct, radius = r, transform = xf } =
                     p2 = s + t2 |*| toPoint v
                     n1 = normalize $ fromPoint (p1 - ct)
                     n2 = normalize $ fromPoint (p2 - ct)
-                in trace ("normal: " ++ show n1 ++ "\t\tp: " ++ show p1) (Hit [ (t1, p1, n1), (t2, p2, n2)])
+                in (Hit [ (t1, p1, n1), (t2, p2, n2)])
               | otherwise =
                 let t = ( -b ) / ( 2 * a )
                     p = s + t |*| toPoint v
