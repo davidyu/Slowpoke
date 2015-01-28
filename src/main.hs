@@ -46,12 +46,12 @@ main
                                                      otherwise -> writePng filename $ generateImage (gather params screenw screenh) screenw screenh
                                                                     where gather params w h x y = let viewport = vp params
                                                                                                       eye' = eye $ cam params
-                                                                                                  in colorToPixel $ raytrace eye' (ray eye' viewport ( (fromIntegral x) / (fromIntegral w), (fromIntegral y) / (fromIntegral h) ) ) (objs params) (rig params)
+                                                                                                  in colorToPixel $ raytrace eye' (ray eye' viewport ( 1 - (fromIntegral x) / (fromIntegral w), (fromIntegral y) / (fromIntegral h) ) ) (objs params) (rig params)
                     otherwise -> print "usage: ./main input.txt"
 
 -- interpolates from (-1, 1) to (0, 1)
 glossPointToSample :: Point -> Sample
-glossPointToSample (x, y) = ( ( float2Double x + 1 ) / 2, ( float2Double y + 1 ) / 2)
+glossPointToSample (x, y) = (1 - (float2Double x + 1)/2, 1 - (float2Double y + 1)/2)
 
 -- translation from gloss color to codec picture pixel
 colorToPixel :: Color -> PixelRGB8
