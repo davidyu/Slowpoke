@@ -8,56 +8,57 @@ epsilon = 0.0001
 toRad :: Double -> Double
 toRad deg = deg * pi / 180
 
-data Vec4 = Vec4 Double Double Double Double deriving (Show)
+data Direction3 = Direction3 Double Double Double deriving (Show)
+type D3 = Direction3
 
-makeVec4FromList [x, y, z, w] = Vec4 x y z w
-makeVec4FromList _ = undefined -- error
+makeDirection3FromList [x, y, z] = Direction3 x y z
+makeDirection3FromList _ = undefined -- error
 
 class Ops a where
   (|*|) :: Double -> a -> a -- scalar multiplication
   dot :: a -> a -> Double
   cross :: a -> a -> a
 
-instance Num Vec4
+instance Num Direction3
   where
-    (Vec4 ax ay az aw) + (Vec4 bx by bz bw) = Vec4 (ax + bx) (ay + by) (az + bz) (aw + bw)
-    (Vec4 ax ay az aw) - (Vec4 bx by bz bw) = Vec4 (ax - bx) (ay - by) (az - bz) (aw - bw)
-    a * b                                   = a `cross` b
-    negate  (Vec4 x y z w)                  = Vec4 (-x) (-y) (-z) w
-    abs                                     = undefined
-    signum                                  = undefined
-    fromInteger                             = undefined
+    (Direction3 ax ay az) + (Direction3 bx by bz) = Direction3 (ax + bx) (ay + by) (az + bz)
+    (Direction3 ax ay az) - (Direction3 bx by bz) = Direction3 (ax - bx) (ay - by) (az - bz)
+    a * b                                         = a `cross` b
+    negate (Direction3 x y z)                     = Direction3 (-x) (-y) (-z)
+    abs                                           = undefined
+    signum                                        = undefined
+    fromInteger                                   = undefined
 
-instance Ops Vec4 where
-  a |*| Vec4 x y z w = Vec4 (a * x) (a * y) (a * z) (a * w)
-  dot (Vec4 ax ay az aw) (Vec4 bx by bz bw) = ax * bx + ay * by + az * bz
-  cross (Vec4 ax ay az aw) (Vec4 bx by bz bw) = Vec4 (ay * bz - az * by) (az * bx - ax * bz) (ax * by - ay * bx) 0
+instance Ops Direction3 where
+  a |*| Direction3 x y z = Direction3 (a * x) (a * y) (a * z)
+  dot (Direction3 ax ay az) (Direction3 bx by bz) = ax * bx + ay * by + az * bz
+  cross (Direction3 ax ay az) (Direction3 bx by bz) = Direction3 (ay * bz - az * by) (az * bx - ax * bz) (ax * by - ay * bx)
 
-lensq (Vec4 x y z _) = x * x + y * y + z * z
+lensq (Direction3 x y z) = x * x + y * y + z * z
 
-len (Vec4 x y z _) = sqrt( x * x + y * y + z * z )
+len :: Direction3 -> Double
+len dir  = sqrt $ lensq dir
 
-getX (Vec4 x _ _ _ ) = x
-getY (Vec4 _ y _ _ ) = y
-getZ (Vec4 _ _ z _ ) = z
-getW (Vec4 _ _ _ w ) = w
+getX (Direction3 x _ _ ) = x
+getY (Direction3 _ y _ ) = y
+getZ (Direction3 _ _ z ) = z
 
-get n (Vec4 x y z w)
+get n (Direction3 x y z)
   | n == 0 = x
   | n == 1 = y
   | n == 2 = z
-  | n == 3 = w
 
-normalize (Vec4 x y z w) = Vec4 (x/l) (y/l) (z/l) w where l = len (Vec4 x y z w)
+normalize dir = let (Direction3 x y z) = dir in Direction3 (x/l) (y/l) (z/l) where l = len dir
 
-tensor :: Vec4 -> Mat4
-tensor (Vec4 x y z w) = Mat4 { m00 = x * x, m01 = x * y, m02 = x * z, m03 = 0
-                             , m10 = y * x, m11 = y * y, m12 = y * z, m13 = 0
-                             , m20 = z * x, m21 = z * y, m22 = z * z, m23 = 0
-                             , m30 = 0    , m31 = 0    , m32 = 0    , m33 = 0
-                             }
+tensor :: Direction3 -> Mat4
+tensor (Direction3 x y z) = Mat4 { m00 = x * x, m01 = x * y, m02 = x * z, m03 = 0
+                                 , m10 = y * x, m11 = y * y, m12 = y * z, m13 = 0
+                                 , m20 = z * x, m21 = z * y, m22 = z * z, m23 = 0
+                                 , m30 = 0    , m31 = 0    , m32 = 0    , m33 = 0
+                                 }
 
 data Point3 = Point3 Double Double Double deriving(Show)
+type P3 = Point3
 
 instance Num Point3
   where
@@ -74,11 +75,11 @@ instance Ops Point3 where
   dot (Point3 ax ay az) (Point3 bx by bz) = ax * bx + ay * by + az * bz
   cross = trace ("Point3 cross") undefined
 
-fromPoint :: Point3 -> Vec4
-fromPoint (Point3 x y z) = Vec4 x y z 1
+fromPoint :: Point3 -> Direction3
+fromPoint (Point3 x y z) = Direction3 x y z
 
-toPoint :: Vec4 -> Point3
-toPoint (Vec4 x y z _) = Point3 x y z
+toPoint :: Direction3 -> Point3
+toPoint (Direction3 x y z) = Point3 x y z
 
 data Mat4 = Mat4 { m00 :: Double, m10 :: Double, m20 :: Double, m30 :: Double
                  , m01 :: Double, m11 :: Double, m21 :: Double, m31 :: Double
@@ -122,12 +123,12 @@ makeMat4FromList lst = error ("expecting 16 elements in list, got " ++ (show $ l
 makeMat4RowMajorFromList [a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p] = makeMat4RowMajor a b c d e f g h i j k l m n o p
 makeMat4RowMajorFromList lst = error ("expecting 16 elements in list, got " ++ (show $ length lst))
 
-makeMat4FromRowVecs [r1, r2, r3, r4]
-  = let Vec4 a b c d = r1
-        Vec4 e f g h = r2
-        Vec4 i j k l = r3
-        Vec4 m n o p = r4
-    in makeMat4RowMajor a b c d e f g h i j k l m n o p
+-- makeMat4FromRowVecs [r1, r2, r3, r4]
+--   = let Direction3 a b c d = r1
+--         Direction3 e f g h = r2
+--         Direction3 i j k l = r3
+--         Direction3 m n o p = r4
+--     in makeMat4RowMajor a b c d e f g h i j k l m n o p
 makeMat4FromRowVecs _ = undefined
 
 -- convenience accessors
@@ -149,7 +150,7 @@ r22 = m22
 
 -- array-like accessors
 m r c mat
-  = get c $ rowvec r mat
+  = (row r mat) !! c
 
 
 -- raw row and column accessors
@@ -170,24 +171,24 @@ rowWithoutCol r c mat
   = let rr = row r mat in (take c rr) ++ (drop (c+1) rr) ++ [0]
 
 -- vector row and column accessors
-rowvec n mat
-  | n == 0 = Vec4 (m00 mat) (m01 mat) (m02 mat) (m03 mat)
-  | n == 1 = Vec4 (m10 mat) (m11 mat) (m12 mat) (m13 mat)
-  | n == 2 = Vec4 (m20 mat) (m21 mat) (m22 mat) (m23 mat)
-  | n == 3 = Vec4 (m30 mat) (m31 mat) (m32 mat) (m33 mat)
-
-colvec n mat
-  | n == 0 = Vec4 (m00 mat) (m10 mat) (m20 mat) (m30 mat)
-  | n == 1 = Vec4 (m01 mat) (m11 mat) (m21 mat) (m31 mat)
-  | n == 2 = Vec4 (m02 mat) (m12 mat) (m22 mat) (m32 mat)
-  | n == 3 = Vec4 (m03 mat) (m13 mat) (m23 mat) (m33 mat)
+-- rowvec n mat
+--   | n == 0 = Direction3 (m00 mat) (m01 mat) (m02 mat) (m03 mat)
+--   | n == 1 = Direction3 (m10 mat) (m11 mat) (m12 mat) (m13 mat)
+--   | n == 2 = Direction3 (m20 mat) (m21 mat) (m22 mat) (m23 mat)
+--   | n == 3 = Direction3 (m30 mat) (m31 mat) (m32 mat) (m33 mat)
+-- 
+-- colvec n mat
+--   | n == 0 = Direction3 (m00 mat) (m10 mat) (m20 mat) (m30 mat)
+--   | n == 1 = Direction3 (m01 mat) (m11 mat) (m21 mat) (m31 mat)
+--   | n == 2 = Direction3 (m02 mat) (m12 mat) (m22 mat) (m32 mat)
+--   | n == 3 = Direction3 (m03 mat) (m13 mat) (m23 mat) (m33 mat)
 
 -- NOTE: row major!
 mat4ToList m = concatMap (\r -> row r m) [0..3]
 
 mat4ToListColMajor m = concatMap (\c -> col c m) [0..3]
 
--- TODO check perf/codegen of Vec4 vs lists for multiplication here
+-- TODO check perf/codegen of Direction3 vs lists for multiplication here
 matmul :: Mat4 -> Mat4 -> Mat4
 matmul lhs rhs = makeMat4RowMajorFromList $ concatMap (computeRow lhs rhs) [0..3]
   where prod = zipWith (*) -- is there a name for this?
@@ -208,14 +209,14 @@ instance Num Mat4
     signum      = undefined
     fromInteger = undefined
 
-matvec :: Mat4 -> Vec4 -> Vec4
-matvec lhs rhs = makeVec4FromList $ map (dot rhs) (map (\r -> rowvec r lhs) [0..3])
+-- matvec :: Mat4 -> Vec4 -> Vec4
+-- matvec lhs rhs = makeDirection3FromList $ map (dot rhs) (map (\r -> rowvec r lhs) [0..3])
 
-vecmat :: Vec4 -> Mat4 -> Vec4
-vecmat lhs rhs = makeVec4FromList $ map (dot lhs) (map (\c -> colvec c rhs) [0..3])
+-- vecmat :: Vec4 -> Mat4 -> Vec4
+-- vecmat lhs rhs = makeDirection3FromList $ map (dot lhs) (map (\c -> colvec c rhs) [0..3])
 
-rotationmat :: Vec4 -> Double -> Mat4
-rotationmat (Vec4 x y z _) angle = (cos r |*| identity3) + (sin r |*| crossmat) + ((1 - cos r) |*| tensor (Vec4 x y z 0)) + w
+rotationmat :: Direction3 -> Double -> Mat4
+rotationmat (Direction3 x y z) angle = (cos r |*| identity3) + (sin r |*| crossmat) + ((1 - cos r) |*| tensor (Direction3 x y z)) + w
   where r = toRad angle
         crossmat = makeMat4RowMajor   0  (-z)   y  0
                                       z    0  (-x) 0
@@ -233,12 +234,12 @@ scalemat x y z = Mat4 { m00 = x, m10 = 0, m20 = 0, m30 = 0
                       , m03 = 0, m13 = 0, m23 = 0, m33 = 1
                       }
 
-translationmat :: Vec4 -> Mat4
-translationmat (Vec4 x y z _) = Mat4 { m00 = 1, m10 = 0, m20 = 0, m30 = 0
-                                     , m01 = 0, m11 = 1, m21 = 0, m31 = 0
-                                     , m02 = 0, m12 = 0, m22 = 1, m32 = 0
-                                     , m03 = x, m13 = y, m23 = z, m33 = 1
-                                     }
+translationmat :: Direction3 -> Mat4
+translationmat (Direction3 x y z) = Mat4 { m00 = 1, m10 = 0, m20 = 0, m30 = 0
+                                         , m01 = 0, m11 = 1, m21 = 0, m31 = 0
+                                         , m02 = 0, m12 = 0, m22 = 1, m32 = 0
+                                         , m03 = x, m13 = y, m23 = z, m33 = 1
+                                         }
 
 
 det3 Mat4 { m00 = a, m01 = b, m02 = c, m03 = _
@@ -272,20 +273,21 @@ inv :: Mat4 -> Mat4
 inv = caleyhamilton
 
 data Ray = Ray { start :: Point3
-               , direction :: Vec4
+               , direction :: Direction3
                } deriving (Show)
 
 -- applies transform t to ray r
 -- make sure we are applying mat4 without translation to vec4
 apply :: Mat4 -> Ray -> Ray
-apply t r = Ray { start = (start r) + (Point3 (tx t) (ty t) (tz t)),
-                  direction = vecmat (direction r) t }
+apply t r = r -- FIXME
+-- apply t r = Ray { start = (start r) + (Point3 (tx t) (ty t) (tz t)),
+--                   direction = vecmat (direction r) t }
 
 data Shape = Sphere { center :: Point3 , radius :: Double , transform :: Mat4 }
            | Triangle { v1 :: Point3 , v2 :: Point3 , v3 :: Point3 }
              deriving (Show)
 
-data IntersectResult = NoHit | Hit [(Double, Point3, Vec4)]
+data IntersectResult = NoHit | Hit [(Double, Point3, Direction3)]
 
 intersect :: Ray -> Shape -> IntersectResult
 intersect ray Sphere { center = ct, radius = r, transform = xf } =

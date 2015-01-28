@@ -79,7 +79,7 @@ raytrace eye ray objs rig = accumulate (ka rig, 1/0) rig (map (\(shape, mat) -> 
                                                      in accumulate acc rig xs
         accumulate (c, _) rig []                   = c
 
-        computeLight :: Color -> [Light] -> Point3 -> Point3 -> Vec4 -> Material -> Color
+        computeLight :: Color -> [Light] -> Point3 -> Point3 -> Direction3 -> Material -> Color
         computeLight acc (light:ls) eye pos normal mat
           = let col = case light of PointLight _ lightcol -> lightcol
                                     DirectionalLight _ lightcol -> lightcol
