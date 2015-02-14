@@ -10,36 +10,36 @@ data Vec (n::Nat) a = Vec (V.Vector a) deriving (Show)
 -- constructors
 
   -- unsafe, but available for convenience
-vector :: forall n a. (KnownNat n, Num a) => [a] -> Vec n a
+vector :: forall n a. (KnownNat n) => [a] -> Vec n a
 vector xs = Vec $ V.fromList xs
 
   -- the nil vector
-nil :: forall a. Num a => Vec 0 a
+nil :: Vec 0 a
 nil = Vec V.empty
 
   -- standard vector construction semantics
-cons :: forall a n. (KnownNat n, Num a) => a -> Vec n a -> Vec (n+1) a
+cons :: forall a n. (KnownNat n) => a -> Vec n a -> Vec (n+1) a
 cons x (Vec xs) = Vec (V.cons x xs)
 
 infixr 5 &
-(&) :: forall a n. (KnownNat n, Num a) => a -> Vec n a -> Vec (n+1) a
+(&) :: forall a n. (KnownNat n) => a -> Vec n a -> Vec (n+1) a
 (&) = cons
 
-snoc :: forall a n. (KnownNat n, Num a) => Vec n a -> a -> Vec (n+1) a
+snoc :: forall a n. (KnownNat n) => Vec n a -> a -> Vec (n+1) a
 snoc (Vec xs) x = Vec (V.snoc xs x)
 
 infixr 5 ++
-(++) :: forall a n m. (KnownNat n, KnownNat m, Num a) => Vec n a -> Vec m a -> Vec (n+m) a
+(++) :: forall a n m. (KnownNat n, KnownNat m) => Vec n a -> Vec m a -> Vec (n+m) a
 (++) (Vec xs) (Vec ys) = Vec (xs V.++ ys)
 
 -- indexing
 
 infixr 5 !
-(!) :: forall n a. (KnownNat n, Num a) => Vec n a -> Int -> a
+(!) :: forall n a. (KnownNat n) => Vec n a -> Int -> a
 (!) (Vec xs) index = xs V.! index
 
 infixr 5 !?
-(!?) :: forall n a. (KnownNat n, Num a) => Vec n a -> Int -> Maybe a
+(!?) :: forall n a. (KnownNat n) => Vec n a -> Int -> Maybe a
 (!?) (Vec xs) index = xs V.!? index
 
 -- commonly used vector types
@@ -90,8 +90,8 @@ class VecAccessors (n::Nat) where
   a :: Vec n a -> a
 
 instance VecAccessors 2 where
-  x (Vec v) = v V.! 0
-  y (Vec v) = v V.! 1
+  x v = v ! 0
+  y v = v ! 1
   z = error "z undefined on Vec2s!"
   w = error "w undefined on Vec2s!"
   xy v = v
@@ -102,9 +102,9 @@ instance VecAccessors 2 where
   a = error "alpha undefined on Vec2s!"
 
 instance VecAccessors 3 where
-  x (Vec v) = v V.! 0
-  y (Vec v) = v V.! 1
-  z (Vec v) = v V.! 2
+  x v = v ! 0
+  y v = v ! 1
+  z v = v ! 2
   w = error "w undefined on Vec3s!"
   xy (Vec v) = Vec (V.take 2 v)
   xyz v = v
@@ -114,10 +114,10 @@ instance VecAccessors 3 where
   a = error "alpha undefined on Vec3s!"
 
 instance VecAccessors 4 where
-  x (Vec v) = v V.! 0
-  y (Vec v) = v V.! 1
-  z (Vec v) = v V.! 2
-  w (Vec v) = v V.! 3
+  x v = v ! 0
+  y v = v ! 1
+  z v = v ! 2
+  w v = v ! 3
   xy (Vec v) = Vec (V.take 2 v)
   xyz (Vec v) = Vec (V.take 3 v)
   r = x
