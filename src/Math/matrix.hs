@@ -17,14 +17,57 @@ infixr 5 |->
 row :: forall a m n. (KnownNat m, KnownNat n) => Matrix m n a -> Int -> Vec n a
 row mat r = mat ! r
 
+infixr 5 <->
+(<->) :: forall a m n. (KnownNat m, KnownNat n) => Matrix m n a -> Int -> Vec n a
+(<->) = row
+
   -- col vector
 col :: forall a m n. (KnownNat m, KnownNat n) => Matrix m n a -> Int -> Vec m a
 col mat c = vmap (\v -> v ! c) mat
 
+infixr 5 <|>
+(<|>) :: forall a m n. (KnownNat m, KnownNat n) => Matrix m n a -> Int -> Vec m a
+(<|>) = col
+
 -- commonly used matrix types
 
 type Mat33 = Matrix 3 3 Double
-type Mat44 = Matrix 3 3 Double
+
+mat33 :: Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Mat33
+mat33 a b c d e f g h i
+  = (a & b & c & nil)
+  & (d & e & f & nil)
+  & (g & h & i & nil)
+  & nil
+
+type Mat44 = Matrix 4 4 Double
+
+mat44 :: Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Mat44
+mat44 a b c d e f g h i j k l m n o p
+  = (a & b & c & d & nil)
+  & (e & f & g & h & nil)
+  & (i & j & k & l & nil)
+  & (m & n & o & p & nil)
+  & nil
+
+type Mat33f = Matrix 3 3 Float
+
+mat33f :: Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Mat33f
+mat33f a b c d e f g h i
+  = (a & b & c & nil)
+  & (d & e & f & nil)
+  & (g & h & i & nil)
+  & nil
+
+type Mat44f = Matrix 4 4 Float
+
+mat44f :: Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Mat44f
+mat44f a b c d e f g h i j k l m n o p
+  = (a & b & c & d & nil)
+  & (e & f & g & h & nil)
+  & (i & j & k & l & nil)
+  & (m & n & o & p & nil)
+  & nil
 
 class HomogeneousMatAccessors (n::Nat) where
   tx :: Matrix n n a -> a
