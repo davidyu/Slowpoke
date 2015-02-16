@@ -42,6 +42,10 @@ infixr 5 !?
 (!?) :: forall n a. (KnownNat n) => Vec n a -> Int -> Maybe a
 (!?) (Vec xs) index = xs V.!? index
 
+-- Haskell idioms
+vmap :: (a -> b) -> Vec n a -> Vec n b
+vmap f (Vec xs) = Vec $ V.map f xs
+
 -- commonly used vector types
 
 type Vec2 = Vec 2 Double
