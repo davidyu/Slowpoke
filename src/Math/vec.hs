@@ -7,7 +7,6 @@ import qualified Data.Vector as V
 
 data Vec (n::Nat) a = Vec (V.Vector a) deriving (Show)
 
-
 -- constructors
 
   -- unsafe, but available for convenience
@@ -29,9 +28,9 @@ infixr 5 &
 snoc :: forall a n. (KnownNat n) => Vec n a -> a -> Vec (n+1) a
 snoc (Vec xs) x = Vec (V.snoc xs x)
 
-infixr 5 ++
-(++) :: forall a n m. (KnownNat n, KnownNat m) => Vec n a -> Vec m a -> Vec (n+m) a
-(++) (Vec xs) (Vec ys) = Vec (xs V.++ ys)
+infixr 5 +++
+(+++) :: forall a n m. (KnownNat n, KnownNat m) => Vec n a -> Vec m a -> Vec (n+m) a
+(+++) (Vec xs) (Vec ys) = Vec (xs V.++ ys)
 
 -- indexing
 infixr 5 !
@@ -76,6 +75,7 @@ vec2f :: Float -> Float -> Vec2f
 vec2f a b = a & b & nil
 
 type Vec3f = Vec 3 Float
+newtype Point3f = Vec3f
 
 vec3f :: Float -> Float -> Float -> Vec3f
 vec3f a b c = a & b & c & nil
@@ -143,7 +143,7 @@ instance Num (Vecd n)
     x - y                                 = vmap (\(x,y) -> x - y ) $ vzip x y
     x * y                                 = vmap (\(x,y) -> x * y ) $ vzip x y
     negate xs                             = vmap (\x -> (-x)) xs
-    abs                                   = normalize
+    abs                                   = norm
     signum                                = undefined
     fromInteger                           = undefined
 
@@ -154,7 +154,7 @@ instance Num (Vecf n)
     x - y                                 = vmap (\(x,y) -> x - y ) $ vzip x y
     x * y                                 = vmap (\(x,y) -> x * y ) $ vzip x y
     negate xs                             = vmap (\x -> (-x)) xs
-    abs                                   = normalize
+    abs                                   = norm
     signum                                = undefined
     fromInteger                           = undefined
 
@@ -168,8 +168,8 @@ lensq xs = vsum $ vmap (^2) xs
 len :: Floating a => Vec n a -> a
 len xs = sqrt $ lensq xs
 
-normalize :: Floating a => Vec n a -> Vec n a
-normalize xs = vmap (/l) xs where
+norm :: Floating a => Vec n a -> Vec n a
+norm xs = vmap (/l) xs where
   l = len xs
 
 -- cross product is only well-defined for 3 and 7-dimensional vectors
