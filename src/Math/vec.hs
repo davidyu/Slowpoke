@@ -10,7 +10,7 @@ data Vec (n::Nat) a = Vec (V.Vector a) deriving (Show)
 -- constructors
 
   -- unsafe, but available for convenience
-vector :: forall n a. (KnownNat n) => [a] -> Vec n a
+vector :: [a] -> Vec n a
 vector xs = Vec $ V.fromList xs
 
   -- the nil vector
@@ -18,28 +18,31 @@ nil :: Vec 0 a
 nil = Vec V.empty
 
   -- standard vector construction semantics
-cons :: forall a n. (KnownNat n) => a -> Vec n a -> Vec (n+1) a
+cons :: a -> Vec n a -> Vec (n+1) a
 cons x (Vec xs) = Vec (V.cons x xs)
 
 infixr 5 &
-(&) :: forall a n. (KnownNat n) => a -> Vec n a -> Vec (n+1) a
+(&) :: a -> Vec n a -> Vec (n+1) a
 (&) = cons
 
-snoc :: forall a n. (KnownNat n) => Vec n a -> a -> Vec (n+1) a
+snoc :: Vec n a -> a -> Vec (n+1) a
 snoc (Vec xs) x = Vec (V.snoc xs x)
 
 infixr 5 +++
-(+++) :: forall a n m. (KnownNat n, KnownNat m) => Vec n a -> Vec m a -> Vec (n+m) a
+(+++) :: Vec n a -> Vec m a -> Vec (n+m) a
 (+++) (Vec xs) (Vec ys) = Vec (xs V.++ ys)
 
 -- indexing
 infixr 5 !
-(!) :: forall n a. (KnownNat n) => Vec n a -> Int -> a
+(!) :: Vec n a -> Int -> a
 (!) (Vec xs) index = xs V.! index
 
 infixr 5 !?
-(!?) :: forall n a. (KnownNat n) => Vec n a -> Int -> Maybe a
+(!?) :: Vec n a -> Int -> Maybe a
 (!?) (Vec xs) index = xs V.!? index
+
+dim :: Vec n a -> Int
+dim (Vec xs) = V.length xs
 
 -- Haskell idioms
 vmap :: (a -> b) -> Vec n a -> Vec n b
@@ -75,7 +78,6 @@ vec2f :: Float -> Float -> Vec2f
 vec2f a b = a & b & nil
 
 type Vec3f = Vec 3 Float
-newtype Point3f = Vec3f
 
 vec3f :: Float -> Float -> Float -> Vec3f
 vec3f a b c = a & b & c & nil
