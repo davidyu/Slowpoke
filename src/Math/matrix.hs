@@ -1,33 +1,40 @@
-{-# LANGUAGE MultiParamTypeClasses, DataKinds, KindSignatures, TypeOperators, ExistentialQuantification, FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses, DataKinds, KindSignatures, TypeOperators, ExistentialQuantification, FlexibleInstances, ScopedTypeVariables #-}
 
 module Math.Matrix where
 
 import Math.Vec
 import GHC.TypeLits
+import Debug.Trace
 
-type Matrix m n a = Vec m (Vec n a)
+type Matrix n m a = Vec n (Vec m a)
 
 -- indexing
   -- shorthand
 infixr 5 |->
-(|->) :: forall a m n. (KnownNat m, KnownNat n) => Matrix m n a -> (Int, Int) -> a
+(|->) :: Matrix m n a -> (Int, Int) -> a
 (|->) m (r,c) = (m ! r) ! c
 
   -- row vector
-row :: forall a m n. (KnownNat m, KnownNat n) => Matrix m n a -> Int -> Vec n a
+row :: Matrix m n a -> Int -> Vec n a
 row mat r = mat ! r
 
 infixr 5 <->
-(<->) :: forall a m n. (KnownNat m, KnownNat n) => Matrix m n a -> Int -> Vec n a
+(<->) :: Matrix m n a -> Int -> Vec n a
 (<->) = row
 
   -- col vector
-col :: forall a m n. (KnownNat m, KnownNat n) => Matrix m n a -> Int -> Vec m a
+col :: Matrix m n a -> Int -> Vec m a
 col mat c = vmap (\v -> v ! c) mat
 
 infixr 5 <|>
-(<|>) :: forall a m n. (KnownNat m, KnownNat n) => Matrix m n a -> Int -> Vec m a
+(<|>) :: Matrix m n a -> Int -> Vec m a
 (<|>) = col
+
+dimy :: Matrix m n a -> Int
+dimy mat = dim mat
+
+dimx :: Matrix m n a -> Int
+dimx mat = dim $ mat <-> 0
 
 -- commonly used matrix types
 
@@ -92,3 +99,14 @@ instance HomogeneousMatAccessors 4 where
   sx mat = mat |-> (0,0)
   sy mat = mat |-> (1,1)
   sz mat = mat |-> (2,2)
+
+matmul :: Num a => Matrix n m a -> Matrix m p a -> Matrix n p a
+matmul a b = vector $ map rowc [0..(dimy a - 1)] where
+  rowc r = vector $ map (\c -> dot ar (b <|> c)) [0..(dimx b - 1)] where
+    ar = a <-> r
+
+vecmat :: Num a => Vec n a -> Matrix n m a -> Vec m a
+vecmat v m = vector $ map (\c -> dot v (m <|> c)) [0..(dimx m - 1)]
+
+matvec :: Num a => Matrix n m a -> Vec m a -> Vec n a
+matvec m v = vector $ map (\r -> dot (m <-> r) v) [0..(dimy m - 1)]
