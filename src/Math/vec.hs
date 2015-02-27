@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, KindSignatures, TypeOperators, ExistentialQuantification, FlexibleInstances #-}
+{-# LANGUAGE DataKinds, KindSignatures, TypeOperators, ExistentialQuantification, FlexibleInstances, MultiParamTypeClasses #-}
 
 module Math.Vec where
 
@@ -159,6 +159,19 @@ instance Num (Vecf n)
     abs                                   = norm
     signum                                = undefined
     fromInteger                           = undefined
+
+-- I really wish we had some notion of operator overloading in Haskell so * can be defined for scalar-vector products
+class VectorScalarOps a where
+  (***) :: (Num a) => a -> Vec n a -> Vec n a
+  (///) :: (Num a) => Vec n a -> a -> Vec n a
+
+instance VectorScalarOps Float where
+  s *** v = vmap (\c -> s * c) v
+  v /// s = vmap (\c -> (c/s)) v
+
+instance VectorScalarOps Double where
+  s *** v = vmap (\c -> s * c) v
+  v /// s = vmap (\c -> (c/s)) v
 
 -- other useful operations
 dot :: Num a => Vec n a -> Vec n a -> a
