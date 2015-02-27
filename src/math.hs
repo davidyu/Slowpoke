@@ -1,5 +1,7 @@
 module Math where
 
+import qualified Math.Vec as V
+import Math.Vec ((***), (///))
 import Debug.Trace
 
 
@@ -215,8 +217,8 @@ instance Num Mat4
 -- vecmat :: Vec4 -> Mat4 -> Vec4
 -- vecmat lhs rhs = makeDirection3FromList $ map (dot lhs) (map (\c -> colvec c rhs) [0..3])
 
-rotationmat :: Direction3 -> Double -> Mat4
-rotationmat (Direction3 x y z) angle = (cos r |*| identity3) + (sin r |*| crossmat) + ((1 - cos r) |*| tensor (Direction3 x y z)) + w
+rotationmat :: V.Vec3 -> Double -> Mat4
+rotationmat v angle = (cos r |*| identity3) + (sin r |*| crossmat) + ((1 - cos r) |*| tensor (Direction3 x y z)) + w
   where r = toRad angle
         crossmat = makeMat4RowMajor   0  (-z)   y  0
                                       z    0  (-x) 0
@@ -226,6 +228,9 @@ rotationmat (Direction3 x y z) angle = (cos r |*| identity3) + (sin r |*| crossm
                              0 0 0 0
                              0 0 0 0
                              0 0 0 1
+        x = V.x v
+        y = V.y v
+        z = V.z v
 
 scalemat :: Double -> Double -> Double -> Mat4
 scalemat x y z = Mat4 { m00 = x, m10 = 0, m20 = 0, m30 = 0
@@ -234,12 +239,16 @@ scalemat x y z = Mat4 { m00 = x, m10 = 0, m20 = 0, m30 = 0
                       , m03 = 0, m13 = 0, m23 = 0, m33 = 1
                       }
 
-translationmat :: Direction3 -> Mat4
-translationmat (Direction3 x y z) = Mat4 { m00 = 1, m10 = 0, m20 = 0, m30 = 0
-                                         , m01 = 0, m11 = 1, m21 = 0, m31 = 0
-                                         , m02 = 0, m12 = 0, m22 = 1, m32 = 0
-                                         , m03 = x, m13 = y, m23 = z, m33 = 1
-                                         }
+translationmat :: V.Vec3 -> Mat4
+translationmat v = Mat4  { m00 = 1, m10 = 0, m20 = 0, m30 = 0
+                         , m01 = 0, m11 = 1, m21 = 0, m31 = 0
+                         , m02 = 0, m12 = 0, m22 = 1, m32 = 0
+                         , m03 = x, m13 = y, m23 = z, m33 = 1
+                         } where
+                    x = V.x v
+                    y = V.y v
+                    z = V.z v
+
 
 
 det3 Mat4 { m00 = a, m01 = b, m02 = c, m03 = _
@@ -272,8 +281,8 @@ caleyhamilton a
 inv :: Mat4 -> Mat4
 inv = caleyhamilton
 
-data Ray = Ray { start :: Point3
-               , direction :: Direction3
+data Ray = Ray { start :: V.Vec3
+               , direction :: V.Vec3
                } deriving (Show)
 
 -- applies transform t to ray r
@@ -283,41 +292,41 @@ apply t r = r -- FIXME
 -- apply t r = Ray { start = (start r) + (Point3 (tx t) (ty t) (tz t)),
 --                   direction = vecmat (direction r) t }
 
-data Shape = Sphere { center :: Point3 , radius :: Double , transform :: Mat4 }
-           | Triangle { v1 :: Point3 , v2 :: Point3 , v3 :: Point3 }
+data Shape = Sphere { center :: V.Vec3 , radius :: Double , transform :: Mat4 }
+           | Triangle { v1 :: V.Vec3 , v2 :: V.Vec3 , v3 :: V.Vec3 }
              deriving (Show)
 
-data IntersectResult = NoHit | Hit [(Double, Point3, Direction3)]
+data IntersectResult = NoHit | Hit [(Double, V.Vec3, V.Vec3)]
 
 intersect :: Ray -> Shape -> IntersectResult
 intersect ray Sphere { center = ct, radius = r, transform = xf } =
   let  Ray {start = s, direction = v} = apply (inv xf) ray
-       a = lensq v -- == 1
-       b = 2 * dot (toPoint v) (s - ct)
-       c = lensq (fromPoint s - fromPoint ct) - r * r
+       a = V.lensq v -- == 1
+       b = 2 * V.dot (v) (s - ct)
+       c = V.lensq (s - ct) - r * r
   in getRaySphereXSection a b c (b * b - 4 * a * c) ct s v
      where getRaySphereXSection a b c discr ct s v
               | discr < (-epsilon) = NoHit
               | discr > epsilon  =
                 let t1 = ( ( -b ) - sqrt discr ) / ( 2 * a )
                     t2 = ( ( -b ) + sqrt discr ) / ( 2 * a )
-                    p1 = s + t1 |*| toPoint v
-                    p2 = s + t2 |*| toPoint v
-                    n1 = normalize $ fromPoint (p1 - ct)
-                    n2 = normalize $ fromPoint (p2 - ct)
+                    p1 = s + t1 *** v
+                    p2 = s + t2 *** v
+                    n1 = abs (p1 - ct)
+                    n2 = abs (p2 - ct)
                 in (Hit [ (t1, p1, n1), (t2, p2, n2)])
               | otherwise =
                 let t = ( -b ) / ( 2 * a )
-                    p = s + t |*| toPoint v
-                    n = normalize $ fromPoint (p - ct)
+                    p = s + t *** v
+                    n = abs (p - ct)
                 in trace (show n) (Hit [ (t, p, n) ])
 intersect ray Triangle { v1 = v1, v2 = v2, v3 = v3 } =
   let Ray { start = o, direction = d } = ray
       e1 = v2 - v1
       e2 = v3 - v1
-      n = toPoint $ (fromPoint e1) `cross` (fromPoint e2)
+      n = e1 `V.cross` e2
       s = o - v1
-      m = toPoint $ (fromPoint s) `cross` d
-      Point3 t u v = (1/(-(n `dot` (toPoint d)))) |*| Point3 (n `dot` s) (m `dot` e2) ((-m) `dot` e1)
-  in if isBarycentric u v && t > 0 then Hit [(t, o + t |*| toPoint d, normalize $ fromPoint n)] else NoHit
+      m = s `V.cross` d
+      Point3 t u v = (1/(-(n `V.dot` d))) |*| Point3 (n `V.dot` s) (m `V.dot` e2) ((-m) `V.dot` e1)
+  in if isBarycentric u v && t > 0 then Hit [(t, o + t *** d, abs n)] else NoHit
     where isBarycentric u v = u >= 0.0 && v >= 0.0 && (u + v) - 1.0 <= epsilon

@@ -1,10 +1,11 @@
+{-# LANGUAGE DataKinds #-}
+
 module Parser where
 
 import Control.Monad
 import Control.Applicative hiding ((<|>), many)
 import Debug.Trace
 import qualified Data.Vector as V
-import Data.Vector ((!))
 import GHC.Float
 import Text.Parsec
 import Text.Parsec.String
@@ -12,6 +13,7 @@ import qualified Text.Parsec.Token
 import Graphics.Gloss (Color, makeColor)
 
 import Math
+import Math.Vec
 
 data Command = CmdSize Int Int
              | CmdMaxdepth Int
@@ -21,8 +23,8 @@ data Command = CmdSize Int Int
              | CmdMaxVerts Int
              | CmdVertex Double Double Double
              | CmdTri Int Int Int
-             | CmdTranslate Direction3
-             | CmdRotate Direction3 Double
+             | CmdTranslate Vec3
+             | CmdRotate Vec3 Double
              | CmdScale Double Double Double
              | CmdPushTransform
              | CmdPopTransform
@@ -178,7 +180,7 @@ translate = do
   whitespace
   z <- double
   eol
-  return $ CmdTranslate (Direction3 x y z)
+  return $ CmdTranslate (vec3 x y z)
 
 rotate :: Parser Command
 rotate = do
@@ -192,7 +194,7 @@ rotate = do
   whitespace
   a <- double
   eol
-  return $ CmdRotate (Direction3 x y z) a
+  return $ CmdRotate (vec3 x y z) a
 
 scale :: Parser Command
 scale = do
@@ -331,24 +333,24 @@ test = parseTest spec "size 256 256\ncamera 1 0.2 1 1 1 1 20\noutput out.png"
 testFile :: IO (Either ParseError [Command])
 testFile = parseFromFile spec "test.txt"
 
-data Camera = Camera { eye :: Point3, target :: Point3, up :: Direction3, fov :: Double } deriving Show
+data Camera = Camera { eye :: Vec3, target :: Vec3, up :: Vec3, fov :: Double } deriving Show
 data Size = Size Int Int deriving Show
 -- kd = diffuse, ks = specular, sh = shininess, ke = emission
 data Material = Material { kd :: Color, ks :: Color, sh :: Double, ke :: Color } deriving Show
 data LightAttenuation = LightAttenuation { constantLightAttenuation :: Double, linearLightAttenuation :: Double, quadraticLightAttenuation :: Double } deriving Show
-data Light = DirectionalLight Direction3 Color | PointLight Point3 Color deriving Show
+data Light = DirectionalLight Vec3 Color | PointLight Vec3 Color deriving Show
 data Rig = Rig { ka :: Color, att :: LightAttenuation, lights :: [Light] } deriving Show
 data Params = Params { cam :: Camera
                      , sz :: Size
                      , out :: String
                      , objs :: [(Shape, Material)]
                      , rig :: Rig
-                     , vxs :: V.Vector Point3
+                     , vxs :: V.Vector Vec3
                      } deriving (Show)
 
 params :: [Command] -> Params
 params cmds = let defaultMaterial = Material { kd = makeColor 0 0 0 1, ks = makeColor 0 0 0 1, sh = 0, ke = makeColor 0 0 0 1 }
-                  defaultParams = Params { cam = Camera { eye = Point3 0 0 0, target = Point3 0 0 (-2), up = Direction3 0 (-1) 0, fov = 20.0 }
+                  defaultParams = Params { cam = Camera { eye = vec3 0 0 0, target = vec3 0 0 (-2), up = vec3 0 (-1) 0, fov = 20.0 }
                                          , sz  = Size 100 100
                                          , out = "default.png"
                                          , objs = []
@@ -363,7 +365,7 @@ params cmds = let defaultMaterial = Material { kd = makeColor 0 0 0 1, ks = make
                         buildParam [] xforms mat p = p
                         buildParam (c:cs) xforms mat p =
                           let cam' = case c of
-                                       CmdCamera x y z tx ty tz upx upy upz fieldofview -> Camera { eye = Point3 x y z, target = Point3 tx ty tz, up = normalize $ Direction3 upx upy upz, fov = fieldofview }
+                                       CmdCamera x y z tx ty tz upx upy upz fieldofview -> Camera { eye = vec3 x y z, target = vec3 tx ty tz, up = norm $ vec3 upx upy upz, fov = fieldofview }
                                        otherwise                                        -> cam p
                               sz'  = case c of
                                        CmdSize w h -> Size w h
@@ -372,10 +374,10 @@ params cmds = let defaultMaterial = Material { kd = makeColor 0 0 0 1, ks = make
                                        CmdOutput f -> f
                                        otherwise   -> out p
                               objs' = case c of
-                                       CmdSphere x y z r -> (Sphere { center = Point3 x y z, radius = r, transform = head xforms }, mat): objs p
-                                       CmdTri v1 v2 v3 -> let v1' = (vxs p) ! v1
-                                                              v2' = (vxs p) ! v2
-                                                              v3' = (vxs p) ! v3
+                                       CmdSphere x y z r -> (Sphere { center = vec3 x y z, radius = r, transform = head xforms }, mat): objs p
+                                       CmdTri v1 v2 v3 -> let v1' = (vxs p) V.! v1
+                                                              v2' = (vxs p) V.! v2
+                                                              v3' = (vxs p) V.! v3
                                                           in (Triangle { v1 = v1', v2 = v2', v3 = v3' }, mat): objs p
                                        otherwise -> objs p
                               mat' = case c of
@@ -385,12 +387,12 @@ params cmds = let defaultMaterial = Material { kd = makeColor 0 0 0 1, ks = make
                                        CmdEmission r g b -> Material { kd = kd mat, ks = ks mat, sh = sh mat, ke = makeColor (double2Float r) (double2Float g) (double2Float b) 1 }
                                        otherwise -> mat
                               vxs' = case c of
-                                       CmdVertex x y z -> vxs p `V.snoc` Point3 x y z
+                                       CmdVertex x y z -> vxs p `V.snoc` (vec3 x y z)
                                        otherwise -> vxs p
                               rig' = case c of CmdAmbient r g b -> Rig { ka = makeColor (double2Float r) (double2Float g) (double2Float b) 1, att = att $ rig p, lights = lights $ rig p }
                                                CmdAttenuation c l q -> Rig { ka = ka $ rig p, att = LightAttenuation { constantLightAttenuation = c, linearLightAttenuation = l, quadraticLightAttenuation = q }, lights = lights $ rig p }
-                                               CmdDirectional x y z r g b -> Rig { ka = ka $ rig p, att = att $ rig p, lights = DirectionalLight (Direction3 x y z) (makeColor (double2Float r) (double2Float g) (double2Float b) 1): (lights $ rig p) }
-                                               CmdPoint x y z r g b -> Rig { ka = ka $ rig p, att = att $ rig p, lights = PointLight (Point3 x y z) (makeColor (double2Float r) (double2Float g) (double2Float b) 1): (lights $ rig p) }
+                                               CmdDirectional x y z r g b -> Rig { ka = ka $ rig p, att = att $ rig p, lights = DirectionalLight (vec3 x y z) (makeColor (double2Float r) (double2Float g) (double2Float b) 1): (lights $ rig p) }
+                                               CmdPoint x y z r g b -> Rig { ka = ka $ rig p, att = att $ rig p, lights = PointLight (vec3 x y z) (makeColor (double2Float r) (double2Float g) (double2Float b) 1): (lights $ rig p) }
                                                otherwise -> rig p
                               xforms' = case c of CmdPushTransform -> (head xforms):xforms
                                                   CmdPopTransform -> tail xforms

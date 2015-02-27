@@ -9,30 +9,32 @@ import System.Environment
 
 import Math
 import Parser
+import qualified Math.Vec as V
+import Math.Vec (( *** ), ( /// ))
 
 type Sample = (Double, Double)
 
-data Viewport = Viewport { upperleft  :: Point3
-                         , upperright :: Point3
-                         , lowerleft  :: Point3
-                         , lowerright :: Point3
+data Viewport = Viewport { upperleft  :: V.Vec3
+                         , upperright :: V.Vec3
+                         , lowerleft  :: V.Vec3
+                         , lowerright :: V.Vec3
                          } deriving (Show)
 
 vp :: Params -> Viewport
-vp p = Viewport { upperleft  = toPoint (center + (-halfw) |*| right + halfh |*| up')
-                , upperright = toPoint (center + halfw |*| right + halfh |*| up')
-                , lowerright = toPoint (center + halfw |*| right + (-halfh) |*| up')
-                , lowerleft  = toPoint (center + (-halfw) |*| right + (-halfh) |*| up') }
-         where eye' = fromPoint $ eye $ cam p
-               center = fromPoint $ target $ cam p
+vp p = Viewport { upperleft  = (center + (-halfw) *** right + halfh *** up')
+                , upperright = (center + halfw *** right + halfh *** up')
+                , lowerright = (center + halfw *** right + (-halfh) *** up')
+                , lowerleft  = (center + (-halfw) *** right + (-halfh) *** up') }
+         where eye' = eye $ cam p
+               center = target $ cam p
                up' = up $ cam p
-               eyedir = normalize (center - eye')
-               right = normalize (eyedir `cross` up')
+               eyedir = abs (center - eye')
+               right = abs (eyedir `V.cross` up')
                Size outputw outputh = sz p
                fovy = fov $ cam p
                fovx = (fromIntegral outputw) * fovy / (fromIntegral outputh)
-               halfh = len (center - eye') * (tan $ toRad (fovy/2))
-               halfw = len (center - eye') * (tan $ toRad (fovx/2))
+               halfh = V.len (center - eye') * (tan $ toRad (fovy/2))
+               halfw = V.len (center - eye') * (tan $ toRad (fovx/2))
 
 main
   = do args <- getArgs
@@ -58,18 +60,18 @@ colorToPixel :: Color -> PixelRGB8
 colorToPixel c = let ( r, g, b, _ ) = rgbaOfColor c
                  in PixelRGB8 (round (r * 255)) (round (g * 255)) (round (b * 255))
 
-ray :: Point3 -> Viewport -> Sample -> Ray
+ray :: V.Vec3 -> Viewport -> Sample -> Ray
 ray eye viewport (u, v) =
   let ul = upperleft  viewport
       ur = upperright viewport
       ll = lowerleft  viewport
       lr = lowerright viewport
-      pt = u |*| ( v |*| ll + ( 1 - v ) |*| ul ) + ( 1 - u ) |*| ( v |*| lr + ( 1 - v ) |*| ur )
-  in Ray {start = eye, direction = normalize (fromPoint pt - fromPoint eye)}
+      pt = u *** ( v *** ll + ( 1 - v ) *** ul ) + ( 1 - u ) *** ( v *** lr + ( 1 - v ) *** ur )
+  in Ray {start = eye, direction = abs (pt - eye)}
 
 -- TODO: make accumulate readable
 -- sort intersect results by t, no conditional in accumulate
-raytrace :: Point3 -> Ray -> [(Shape, Material)] -> Rig -> Color
+raytrace :: V.Vec3 -> Ray -> [(Shape, Material)] -> Rig -> Color
 raytrace eye ray [] rig   = ka rig
 raytrace eye ray objs rig = accumulate (ka rig, 1/0) rig (map (\(shape, mat) -> (intersect ray shape, mat)) objs)
   where accumulate :: (Color, Double) -> Rig -> [(IntersectResult, Material)] -> Color
@@ -79,15 +81,15 @@ raytrace eye ray objs rig = accumulate (ka rig, 1/0) rig (map (\(shape, mat) -> 
                                                      in accumulate acc rig xs
         accumulate (c, _) rig []                   = c
 
-        computeLight :: Color -> [Light] -> Point3 -> Point3 -> Direction3 -> Material -> Color
+        computeLight :: Color -> [Light] -> V.Vec3 -> V.Vec3 -> V.Vec3 -> Material -> Color
         computeLight acc (light:ls) eye pos normal mat
           = let col = case light of PointLight _ lightcol -> lightcol
                                     DirectionalLight _ lightcol -> lightcol
-                l = case light of PointLight lightpos _ -> normalize $ fromPoint (lightpos - pos)
-                                  DirectionalLight lightdir _ -> normalize lightdir
-                h = normalize (normalize $ fromPoint (eye - pos) + l)
-                diffuse = (kd mat) * (greyN $ double2Float (max (normal `dot` l) 0))
-                specular = (ks mat) * (greyN $ double2Float ((max (normal `dot` h) 0) ** (sh mat)))
+                l = case light of PointLight lightpos _ -> abs (lightpos - pos)
+                                  DirectionalLight lightdir _ -> abs lightdir
+                h = abs (abs (eye - pos) + l)
+                diffuse = (kd mat) * (greyN $ double2Float (max (normal `V.dot` l) 0))
+                specular = (ks mat) * (greyN $ double2Float ((max (normal `V.dot` h) 0) ** (sh mat)))
                 acc' = acc + col * (diffuse + specular)
             in computeLight acc' ls eye pos normal mat
         computeLight acc [] eye pos normal mat = acc
