@@ -187,6 +187,10 @@ norm :: Floating a => Vec n a -> Vec n a
 norm xs = vmap (/l) xs where
   l = len xs
 
+tensor :: Num a => Vec n a -> Vec n (Vec n a)
+tensor v = vector $ map row' [0..(dim v - 1)] where
+  row' i = vmap (* (v ! i)) v
+
 -- cross product is only well-defined for 3 and 7-dimensional vectors
 class CrossProduct (n::Nat) where
   cross :: Num a => Vec n a -> Vec n a -> Vec n a
