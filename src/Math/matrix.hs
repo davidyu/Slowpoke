@@ -38,38 +38,38 @@ dimx mat = dim $ mat <-> 0
 
 -- commonly used matrix types
 
-type Mat33 = Matrix 3 3 Double
+type Mat3 = Matrix 3 3 Double
 
-mat33 :: Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Mat33
-mat33 a b c d e f g h i
+mat3 :: Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Mat3
+mat3 a b c d e f g h i
   = (a & b & c & nil)
   & (d & e & f & nil)
   & (g & h & i & nil)
   & nil
 
-type Mat44 = Matrix 4 4 Double
+type Mat4 = Matrix 4 4 Double
 
-mat44 :: Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Mat44
-mat44 a b c d e f g h i j k l m n o p
+mat4 :: Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Double -> Mat4
+mat4 a b c d e f g h i j k l m n o p
   = (a & b & c & d & nil)
   & (e & f & g & h & nil)
   & (i & j & k & l & nil)
   & (m & n & o & p & nil)
   & nil
 
-type Mat33f = Matrix 3 3 Float
+type Mat3f = Matrix 3 3 Float
 
-mat33f :: Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Mat33f
-mat33f a b c d e f g h i
+mat3f :: Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Mat3f
+mat3f a b c d e f g h i
   = (a & b & c & nil)
   & (d & e & f & nil)
   & (g & h & i & nil)
   & nil
 
-type Mat44f = Matrix 4 4 Float
+type Mat4f = Matrix 4 4 Float
 
-mat44f :: Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Mat44f
-mat44f a b c d e f g h i j k l m n o p
+mat4f :: Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Float -> Mat4f
+mat4f a b c d e f g h i j k l m n o p
   = (a & b & c & d & nil)
   & (e & f & g & h & nil)
   & (i & j & k & l & nil)
@@ -110,3 +110,26 @@ vecmat v m = vector $ map (\c -> dot v (m <|> c)) [0..(dimx m - 1)]
 
 matvec :: Num a => Matrix n m a -> Vec m a -> Vec n a
 matvec m v = vector $ map (\r -> dot (m <-> r) v) [0..(dimy m - 1)]
+
+identity :: Num a => Int -> Matrix n n a
+identity n = vector $ map row' [0..(n-1)] where
+  row' i = vector $ (replicate i 0) ++ (1:(replicate (n-i-1) 0))
+
+transpose :: Matrix n m a -> Matrix m n a
+transpose m = vector $ map (m <|>) [0..(dimx m - 1)]
+
+-- Doolittle LU decomposition
+lu :: Fractional a => Matrix n n a -> (Matrix n n a, Matrix n n a) -- first is L, second is U
+lu m = doolittle (identity $ dimx m) m 0 where
+  dim = dimx m
+  doolittle l a n
+    | n == dim-1 = (l,a)
+    | otherwise  = doolittle l' a' (n+1) where
+                     l' = matmul l ln' -- ln' is inverse of ln
+                     a' = matmul ln a
+                     ln = vector $ (map id' [0..n] ++ map lr' [(n+1)..(dim-1)]) where
+                       id' i = vector $ (replicate i 0) ++ (1:(replicate (dim-i-1) 0))
+                       lr' i = vector $ (replicate n 0) ++ [-(a |-> (i,n)) / (a |-> (n,n))] ++ (replicate (i-n-1) 0) ++ 1:(replicate (dim-i-1) 0)
+                     ln' = vector $ (map id' [0..n] ++ map lr' [(n+1)..(dim-1)]) where
+                       id' i = vector $ (replicate i 0) ++ (1:(replicate (dim-i-1) 0))
+                       lr' i = vector $ (replicate n 0) ++ [(a |-> (i,n)) / (a |-> (n,n))] ++ (replicate (i-n-1) 0) ++ 1:(replicate (dim-i-1) 0)
