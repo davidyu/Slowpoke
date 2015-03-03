@@ -120,7 +120,7 @@ transpose m = vector $ map (m <|>) [0..(dimx m - 1)]
 
 -- Doolittle LU decomposition
 lu :: Fractional a => Matrix n n a -> (Matrix n n a, Matrix n n a) -- first is L, second is U
-lu m = doolittle (identity $ dimx m) m 0 where
+lu m = if dimx m == dimy m then doolittle (identity $ dimx m) m 0 else error "matrix not square" where
   dim = dimx m
   doolittle l a n
     | n == dim-1 = (l,a)
@@ -128,8 +128,7 @@ lu m = doolittle (identity $ dimx m) m 0 where
                      l' = matmul l ln' -- ln' is inverse of ln
                      a' = matmul ln a
                      ln = vector $ (map id' [0..n] ++ map lr' [(n+1)..(dim-1)]) where
-                       id' i = vector $ (replicate i 0) ++ (1:(replicate (dim-i-1) 0))
                        lr' i = vector $ (replicate n 0) ++ [-(a |-> (i,n)) / (a |-> (n,n))] ++ (replicate (i-n-1) 0) ++ 1:(replicate (dim-i-1) 0)
                      ln' = vector $ (map id' [0..n] ++ map lr' [(n+1)..(dim-1)]) where
-                       id' i = vector $ (replicate i 0) ++ (1:(replicate (dim-i-1) 0))
                        lr' i = vector $ (replicate n 0) ++ [(a |-> (i,n)) / (a |-> (n,n))] ++ (replicate (i-n-1) 0) ++ 1:(replicate (dim-i-1) 0)
+                     id' i = vector $ (replicate i 0) ++ (1:(replicate (dim-i-1) 0))
