@@ -128,7 +128,8 @@ lu m = if dimx m == dimy m then doolittle (identity $ dimx m) m 0 else error "ma
                      l' = matmul l ln' -- ln' is inverse of ln
                      a' = matmul ln a
                      ln = vector $ (map id' [0..n] ++ map lr' [(n+1)..(dim-1)]) where
-                       lr' i = vector $ (replicate n 0) ++ [-(a |-> (i,n)) / (a |-> (n,n))] ++ (replicate (i-n-1) 0) ++ 1:(replicate (dim-i-1) 0)
+                       lr' i = vector $ (replicate n 0) ++ [-(ai' i)] ++ (replicate (i-n-1) 0) ++ 1:(replicate (dim-i-1) 0)
                      ln' = vector $ (map id' [0..n] ++ map lr' [(n+1)..(dim-1)]) where
-                       lr' i = vector $ (replicate n 0) ++ [(a |-> (i,n)) / (a |-> (n,n))] ++ (replicate (i-n-1) 0) ++ 1:(replicate (dim-i-1) 0)
+                       lr' i = vector $ (replicate n 0) ++ [ai' i] ++ (replicate (i-n-1) 0) ++ 1:(replicate (dim-i-1) 0)
                      id' i = vector $ (replicate i 0) ++ (1:(replicate (dim-i-1) 0))
+                     ai' i = (a |-> (i,n)) / (a |-> (n,n))
