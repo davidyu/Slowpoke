@@ -19,14 +19,14 @@ nil = Vec V.empty
 
   -- standard vector construction semantics
 cons :: a -> Vec n a -> Vec (n+1) a
-cons x (Vec xs) = Vec (V.cons x xs)
+cons s (Vec ss) = Vec (V.cons s ss)
 
 infixr 5 &
 (&) :: a -> Vec n a -> Vec (n+1) a
 (&) = cons
 
 snoc :: Vec n a -> a -> Vec (n+1) a
-snoc (Vec xs) x = Vec (V.snoc xs x)
+snoc (Vec ss) s = Vec (V.snoc ss s)
 
 infixr 5 +++
 (+++) :: Vec n a -> Vec m a -> Vec (n+m) a
@@ -59,33 +59,33 @@ vsum (Vec xs) = V.sum xs
 type Vec2 = Vec 2 Double
 
 vec2 :: Double -> Double -> Vec2
-vec2 a b = a & b & nil
+vec2 x1 x2 = x1 & x2 & nil
 
 type Vec3 = Vec 3 Double
 
 vec3 :: Double -> Double -> Double -> Vec3
-vec3 a b c = a & b & c & nil
+vec3 x1 x2 x3 = x1 & x2 & x3 & nil
 
 type Vec4 = Vec 4 Double
 
 vec4 :: Double -> Double -> Double -> Double -> Vec4
-vec4 a b c d = a & b & c & d & nil
+vec4 x1 x2 x3 x4 = x1 & x2 & x3 & x4 & nil
 
-  -- in case we need float versions of vectors
+  -- in case we neex4 float versions of vectors
 type Vec2f = Vec 2 Float
 
 vec2f :: Float -> Float -> Vec2f
-vec2f a b = a & b & nil
+vec2f x1 x2 = x1 & x2 & nil
 
 type Vec3f = Vec 3 Float
 
 vec3f :: Float -> Float -> Float -> Vec3f
-vec3f a b c = a & b & c & nil
+vec3f x1 x2 x3 = x1 & x2 & x3 & nil
 
 type Vec4f = Vec 4 Float
 
 vec4f :: Float -> Float -> Float -> Float -> Vec4f
-vec4f a b c d = a & b & c & d & nil
+vec4f x1 x2 x3 x4 = x1 & x2 & x3 & x4 & nil
 
 -- commonly used vector accessors
 
@@ -141,10 +141,10 @@ instance VecAccessors 4 where
 type Vecd n = Vec n Double
 instance Num (Vecd n)
   where
-    x + y                                 = vmap (\(x,y) -> x + y ) $ vzip x y
-    x - y                                 = vmap (\(x,y) -> x - y ) $ vzip x y
-    x * y                                 = vmap (\(x,y) -> x * y ) $ vzip x y
-    negate xs                             = vmap (\x -> (-x)) xs
+    v1 + v2                               = vmap (uncurry (+)) $ vzip v1 v2
+    v1 - v2                               = vmap (uncurry (-)) $ vzip v1 v2
+    v1 * v2                               = vmap (uncurry (*)) $ vzip v1 v2
+    negate                                = vmap (\v' -> -v')
     abs                                   = norm
     signum                                = undefined
     fromInteger                           = undefined
@@ -152,10 +152,10 @@ instance Num (Vecd n)
 type Vecf n = Vec n Float
 instance Num (Vecf n)
   where
-    x + y                                 = vmap (\(x,y) -> x + y ) $ vzip x y
-    x - y                                 = vmap (\(x,y) -> x - y ) $ vzip x y
-    x * y                                 = vmap (\(x,y) -> x * y ) $ vzip x y
-    negate xs                             = vmap (\x -> (-x)) xs
+    v1 + v2                               = vmap (uncurry (+)) $ vzip v1 v2
+    v1 - v2                               = vmap (uncurry (-)) $ vzip v1 v2
+    v1 * v2                               = vmap (uncurry (*)) $ vzip v1 v2
+    negate                                = vmap (\v' -> -v')
     abs                                   = norm
     signum                                = undefined
     fromInteger                           = undefined
@@ -166,22 +166,22 @@ class VectorScalarOps a where
   (///) :: (Num a) => Vec n a -> a -> Vec n a
 
 instance VectorScalarOps Float where
-  s *** v = vmap (\c -> s * c) v
-  v /// s = vmap (\c -> (c/s)) v
+  s *** v = vmap (*s) v
+  v /// s = vmap (/s) v
 
 instance VectorScalarOps Double where
-  s *** v = vmap (\c -> s * c) v
-  v /// s = vmap (\c -> (c/s)) v
+  s *** v = vmap (*s) v
+  v /// s = vmap (/s) v
 
 -- other useful operations
 dot :: Num a => Vec n a -> Vec n a -> a
-dot xs ys = vsum $ vmap (\(x,y) -> x * y) $ vzip xs ys
+dot v1 v2 = vsum $ vmap (uncurry (*)) $ vzip v1 v2
 
 lensq :: Num a => Vec n a -> a
-lensq xs = vsum $ vmap (^2) xs
+lensq v = vsum $ vmap (\v' -> v' * v') v
 
 len :: Floating a => Vec n a -> a
-len xs = sqrt $ lensq xs
+len v = sqrt $ lensq v
 
 norm :: Floating a => Vec n a -> Vec n a
 norm xs = vmap (/l) xs where
@@ -205,7 +205,7 @@ instance CrossProduct 3 where
     vz = z v
 
 instance CrossProduct 7 where
-  cross x y = vector [s1, s2, s3, s4, s5, s6, s7] where
+  cross v1 v2 = vector [s1, s2, s3, s4, s5, s6, s7] where
     s1 = x2*y4 - x4*y2 + x3*y7 - x7*y3 + x5*y6 - x6*y5
     s2 = x3*y5 - x5*y3 + x4*y1 - x1*y4 + x6*y7 - x7*y6
     s3 = x4*y6 - x6*y4 + x5*y2 - x2*y5 + x7*y1 - x1*y7
@@ -213,17 +213,17 @@ instance CrossProduct 7 where
     s5 = x6*y1 - x1*y6 + x7*y4 - x4*y7 + x2*y3 - x3*y2
     s6 = x7*y2 - x2*y7 + x1*y5 - x5*y1 + x3*y4 - x4*y3
     s7 = x1*y3 - x3*y1 + x2*y6 - x6*y2 + x4*y5 - x5*y4
-    x1 = x ! 0
-    x2 = x ! 1
-    x3 = x ! 2
-    x4 = x ! 3
-    x5 = x ! 4
-    x6 = x ! 5
-    x7 = x ! 6
-    y1 = y ! 0
-    y2 = y ! 1
-    y3 = y ! 2
-    y4 = y ! 3
-    y5 = y ! 4
-    y6 = y ! 5
-    y7 = y ! 6
+    x1 = v1 ! 0
+    x2 = v1 ! 1
+    x3 = v1 ! 2
+    x4 = v1 ! 3
+    x5 = v1 ! 4
+    x6 = v1 ! 5
+    x7 = v1 ! 6
+    y1 = v2 ! 0
+    y2 = v2 ! 1
+    y3 = v2 ! 2
+    y4 = v2 ! 3
+    y5 = v2 ! 4
+    y6 = v2 ! 5
+    y7 = v2 ! 6

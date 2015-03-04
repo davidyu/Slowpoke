@@ -2,9 +2,8 @@
 
 module Math.Matrix where
 
-import Math.Vec
+import Math.Vec hiding (r,g,b,a,x,y,z,w)
 import GHC.TypeLits
-import Debug.Trace
 
 type Matrix n m a = Vec n (Vec m a)
 
@@ -24,14 +23,14 @@ infixr 5 <->
 
   -- col vector
 col :: Matrix m n a -> Int -> Vec m a
-col mat c = vmap (\v -> v ! c) mat
+col mat c = vmap (!c) mat
 
 infixr 5 <|>
 (<|>) :: Matrix m n a -> Int -> Vec m a
 (<|>) = col
 
 dimy :: Matrix m n a -> Int
-dimy mat = dim mat
+dimy = dim
 
 dimx :: Matrix m n a -> Int
 dimx mat = dim $ mat <-> 0
@@ -87,10 +86,10 @@ class HomogeneousMatAccessors (n::Nat) where
 instance HomogeneousMatAccessors 3 where
   tx mat = mat |-> (0,2)
   ty mat = mat |-> (1,2)
-  tz mat = error "tz undefined for Mat33!"
+  tz     = error "tz undefined for Mat33!"
   sx mat = mat |-> (0,0)
   sy mat = mat |-> (1,1)
-  sz mat = error "scale z undefined for Mat33!"
+  sz     = error "scale z undefined for Mat33!"
 
 instance HomogeneousMatAccessors 4 where
   tx mat = mat |-> (0,3)
@@ -113,7 +112,7 @@ matvec m v = vector $ map (\r -> dot (m <-> r) v) [0..(dimy m - 1)]
 
 identity :: Num a => Int -> Matrix n n a
 identity n = vector $ map row' [0..(n-1)] where
-  row' i = vector $ (replicate i 0) ++ (1:(replicate (n-i-1) 0))
+  row' i = vector $ replicate i 0 ++ 1:replicate (n-i-1) 0
 
 transpose :: Matrix n m a -> Matrix m n a
 transpose m = vector $ map (m <|>) [0..(dimx m - 1)]
@@ -121,15 +120,15 @@ transpose m = vector $ map (m <|>) [0..(dimx m - 1)]
 -- Doolittle LU decomposition
 lu :: Fractional a => Matrix n n a -> (Matrix n n a, Matrix n n a) -- first is L, second is U
 lu m = if dimx m == dimy m then doolittle (identity $ dimx m) m 0 else error "matrix not square" where
-  dim = dimx m
+  mdim = dimx m
   doolittle l a n
-    | n == dim-1 = (l,a)
+    | n == mdim-1 = (l,a)
     | otherwise  = doolittle l' a' (n+1) where
                      l' = matmul l ln' -- ln' is inverse of ln
                      a' = matmul ln a
-                     ln = vector $ (map id' [0..n] ++ map lr' [(n+1)..(dim-1)]) where
-                       lr' i = vector $ (replicate n 0) ++ [-(ai' i)] ++ (replicate (i-n-1) 0) ++ 1:(replicate (dim-i-1) 0)
-                     ln' = vector $ (map id' [0..n] ++ map lr' [(n+1)..(dim-1)]) where
-                       lr' i = vector $ (replicate n 0) ++ [ai' i] ++ (replicate (i-n-1) 0) ++ 1:(replicate (dim-i-1) 0)
-                     id' i = vector $ (replicate i 0) ++ (1:(replicate (dim-i-1) 0))
+                     ln = vector (map id' [0..n] ++ map lr' [(n+1)..(mdim-1)]) where
+                       lr' i = vector $ replicate n 0 ++ [-(ai' i)] ++ replicate (i-n-1) 0 ++ 1:replicate (mdim-i-1) 0
+                     ln' = vector (map id' [0..n] ++ map lr' [(n+1)..(mdim-1)]) where
+                       lr' i = vector $ replicate n 0 ++ [ai' i] ++ replicate (i-n-1) 0 ++ 1:replicate (mdim-i-1) 0
+                     id' i = vector $ replicate i 0 ++ 1:replicate (mdim-i-1) 0
                      ai' i = (a |-> (i,n)) / (a |-> (n,n))
