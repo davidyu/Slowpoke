@@ -127,8 +127,8 @@ transpose m = vector $ map (m <|>) [0..(dimx m - 1)]
 
 -- Doolittle LU decomposition
 lu :: Fractional a => Matrix n n a -> (Matrix n n a, Matrix n n a) -- first is L, second is U
-lu m = if dimx m == dimy m then doolittle (identity $ dimx m) m 0 else error "matrix not square" where
-  mdim = dimx m
+lu m = if dim m == dimy m then doolittle (identity $ dim m) m 0 else error "matrix not square" where
+  mdim = dim m
   doolittle l a n
     | n == mdim-1 = (l,a)
     | otherwise  = doolittle l' a' (n+1) where
@@ -143,25 +143,25 @@ lu m = if dimx m == dimy m then doolittle (identity $ dimx m) m 0 else error "ma
 
 det :: Fractional a => Matrix n n a -> a
 det m
-  | dimx m == 1 = m |-> (0,0)
-  | dimx m == 2 = let a = m |-> (0,0)
-                      b = m |-> (0,1)
-                      c = m |-> (1,0)
-                      d = m |-> (1,1)
+  | dim m == 1 = m |-> (0,0)
+  | dim m == 2 = let a = m |-> (0,0)
+                     b = m |-> (0,1)
+                     c = m |-> (1,0)
+                     d = m |-> (1,1)
                   in a*d - b*c
-  | dimx m == 3 = let a = m |-> (0,0)
-                      b = m |-> (0,1)
-                      c = m |-> (0,2)
-                      d = m |-> (1,0)
-                      e = m |-> (1,1)
-                      f = m |-> (1,2)
-                      g = m |-> (2,0)
-                      h = m |-> (2,1)
-                      i = m |-> (2,2)
-                  in a*e*i + b*f*g + c*d*h - c*e*g - b*d*i - a*f*h
+  | dim m == 3 = let a = m |-> (0,0)
+                     b = m |-> (0,1)
+                     c = m |-> (0,2)
+                     d = m |-> (1,0)
+                     e = m |-> (1,1)
+                     f = m |-> (1,2)
+                     g = m |-> (2,0)
+                     h = m |-> (2,1)
+                     i = m |-> (2,2)
+                 in a*e*i + b*f*g + c*d*h - c*e*g - b*d*i - a*f*h
   | otherwise = tridet u where
     (_,u) = lu m
-    tridet mat = foldl (*) 1 $ map (\i -> mat |-> (i,i)) [0..(dimx mat - 1)]
+    tridet mat = foldl (*) 1 $ map (\i -> mat |-> (i,i)) [0..(dim mat - 1)]
 
 -- debugging helpers
 instance (Show a) => Show (Matrix n m a) where
