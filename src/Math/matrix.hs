@@ -141,6 +141,11 @@ lu m = if dimx m == dimy m then doolittle (identity $ dimx m) m 0 else error "ma
                      id' i = vector $ replicate i 0 ++ 1:replicate (mdim-i-1) 0
                      ai' i = (a |-> (i,n)) / (a |-> (n,n))
 
+det :: Fractional a => Matrix n n a -> a
+det m = tridet u where
+  (_,u) = lu m
+  tridet mat = foldl (*) 1 $ map (\i -> mat |-> (i,i)) [0..(dimx mat - 1)]
+
 -- debugging helpers
 instance (Show a) => Show (Matrix n m a) where
   show m = concatMap showRow [0..(dimy m - 1)] where
