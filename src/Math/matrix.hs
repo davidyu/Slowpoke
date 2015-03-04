@@ -1,4 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses, DataKinds, KindSignatures, TypeOperators, FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses, DataKinds, KindSignatures, TypeOperators, FlexibleInstances, OverlappingInstances, TypeSynonymInstances, IncoherentInstances #-}
 
 module Math.Matrix where
 
@@ -142,7 +142,7 @@ lu m = if dimx m == dimy m then doolittle (identity $ dimx m) m 0 else error "ma
                      ai' i = (a |-> (i,n)) / (a |-> (n,n))
 
 -- debugging helpers
-instance (Show a) => Show (Matrix n n a) where
+instance (Show a) => Show (Matrix n m a) where
   show m = concatMap showRow [0..(dimy m - 1)] where
     showRow r = concatMap formatRowValueAtColumn [0..(dimx m - 1)] where
       formatRowValueAtColumn c

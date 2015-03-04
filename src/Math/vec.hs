@@ -1,4 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses, DataKinds, KindSignatures, TypeOperators, FlexibleInstances, OverlappingInstances #-}
+{-# LANGUAGE MultiParamTypeClasses, DataKinds, KindSignatures, TypeOperators, FlexibleInstances #-}
 
 module Math.Vec where
 
@@ -218,8 +218,9 @@ instance CrossProduct 7 where
     y7 = v2 ! 6
 
 -- debugging helpers
-instance (Show a) => Show (Vec n a) where
+instance Show a => Show (Vec n a) where
   show v = "(" ++ concatMap formatValueAtIndex [0..(dim v - 1)] ++ ")" where
     formatValueAtIndex i
       | i == dim v - 1 = show $ v ! i
       | otherwise      = show (v ! i) ++ ", "
+
