@@ -142,9 +142,26 @@ lu m = if dimx m == dimy m then doolittle (identity $ dimx m) m 0 else error "ma
                      ai' i = (a |-> (i,n)) / (a |-> (n,n))
 
 det :: Fractional a => Matrix n n a -> a
-det m = tridet u where
-  (_,u) = lu m
-  tridet mat = foldl (*) 1 $ map (\i -> mat |-> (i,i)) [0..(dimx mat - 1)]
+det m
+  | dimx m == 1 = m |-> (0,0)
+  | dimx m == 2 = let a = m |-> (0,0)
+                      b = m |-> (0,1)
+                      c = m |-> (1,0)
+                      d = m |-> (1,1)
+                  in a*d - b*c
+  | dimx m == 3 = let a = m |-> (0,0)
+                      b = m |-> (0,1)
+                      c = m |-> (0,2)
+                      d = m |-> (1,0)
+                      e = m |-> (1,1)
+                      f = m |-> (1,2)
+                      g = m |-> (2,0)
+                      h = m |-> (2,1)
+                      i = m |-> (2,2)
+                  in a*e*i + b*f*g + c*d*h - c*e*g - b*d*i - a*f*h
+  | otherwise = tridet u where
+    (_,u) = lu m
+    tridet mat = foldl (*) 1 $ map (\i -> mat |-> (i,i)) [0..(dimx mat - 1)]
 
 -- debugging helpers
 instance (Show a) => Show (Matrix n m a) where
