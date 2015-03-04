@@ -1,11 +1,11 @@
-{-# LANGUAGE DataKinds, KindSignatures, TypeOperators, ExistentialQuantification, FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE MultiParamTypeClasses, DataKinds, KindSignatures, TypeOperators, FlexibleInstances, OverlappingInstances #-}
 
 module Math.Vec where
 
 import GHC.TypeLits
 import qualified Data.Vector as V
 
-data Vec (n::Nat) a = Vec (V.Vector a) deriving (Show)
+data Vec (n::Nat) a = Vec (V.Vector a)
 
 -- constructors
 
@@ -138,8 +138,7 @@ instance VecAccessors 4 where
   a = w
 
 -- define componentwise operations for supported numeric Vecs (just doubles and floats for now)
-type Vecd n = Vec n Double
-instance Num (Vecd n)
+instance (Floating a) => Num (Vec n a)
   where
     v1 + v2                               = vmap (uncurry (+)) $ vzip v1 v2
     v1 - v2                               = vmap (uncurry (-)) $ vzip v1 v2
@@ -149,16 +148,6 @@ instance Num (Vecd n)
     signum                                = undefined
     fromInteger                           = undefined
 
-type Vecf n = Vec n Float
-instance Num (Vecf n)
-  where
-    v1 + v2                               = vmap (uncurry (+)) $ vzip v1 v2
-    v1 - v2                               = vmap (uncurry (-)) $ vzip v1 v2
-    v1 * v2                               = vmap (uncurry (*)) $ vzip v1 v2
-    negate                                = vmap (\v' -> -v')
-    abs                                   = norm
-    signum                                = undefined
-    fromInteger                           = undefined
 
 -- I really wish we had some notion of operator overloading in Haskell so * can be defined for scalar-vector products
 class VectorScalarOps a where
@@ -227,3 +216,10 @@ instance CrossProduct 7 where
     y5 = v2 ! 4
     y6 = v2 ! 5
     y7 = v2 ! 6
+
+-- debugging helpers
+instance (Show a) => Show (Vec n a) where
+  show v = "(" ++ concatMap formatValueAtIndex [0..(dim v - 1)] ++ ")" where
+    formatValueAtIndex i
+      | i == dim v - 1 = show $ v ! i
+      | otherwise      = show (v ! i) ++ ", "

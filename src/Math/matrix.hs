@@ -1,4 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses, DataKinds, KindSignatures, TypeOperators, ExistentialQuantification, FlexibleInstances, ScopedTypeVariables #-}
+{-# LANGUAGE MultiParamTypeClasses, DataKinds, KindSignatures, TypeOperators, FlexibleInstances #-}
 
 module Math.Matrix where
 
@@ -99,6 +99,7 @@ instance HomogeneousMatAccessors 4 where
   sy mat = mat |-> (1,1)
   sz mat = mat |-> (2,2)
 
+-- common operations
 matmul :: Num a => Matrix n m a -> Matrix m p a -> Matrix n p a
 matmul a b = vector $ map rowc [0..(dimy a - 1)] where
   rowc r = vector $ map (\c -> dot ar (b <|> c)) [0..(dimx b - 1)] where
@@ -113,6 +114,13 @@ matvec m v = vector $ map (\r -> dot (m <-> r) v) [0..(dimy m - 1)]
 identity :: Num a => Int -> Matrix n n a
 identity n = vector $ map row' [0..(n-1)] where
   row' i = vector $ replicate i 0 ++ 1:replicate (n-i-1) 0
+
+-- typesafe id constructors
+identity4 :: Num a => Matrix 4 4 a
+identity4 = identity 4
+
+identity3 :: Num a => Matrix 3 3 a
+identity3 = identity 3
 
 transpose :: Matrix n m a -> Matrix m n a
 transpose m = vector $ map (m <|>) [0..(dimx m - 1)]
@@ -132,3 +140,12 @@ lu m = if dimx m == dimy m then doolittle (identity $ dimx m) m 0 else error "ma
                        lr' i = vector $ replicate n 0 ++ [ai' i] ++ replicate (i-n-1) 0 ++ 1:replicate (mdim-i-1) 0
                      id' i = vector $ replicate i 0 ++ 1:replicate (mdim-i-1) 0
                      ai' i = (a |-> (i,n)) / (a |-> (n,n))
+
+-- debugging helpers
+instance (Show a) => Show (Matrix n n a) where
+  show m = concatMap showRow [0..(dimy m - 1)] where
+    showRow r = concatMap formatRowValueAtColumn [0..(dimx m - 1)] where
+      formatRowValueAtColumn c
+        | c == dimx m - 1 && r == dimy m - 1 = show (m |-> (r,c))
+        | c == dimx m - 1                    = show (m |-> (r,c)) ++ "\n"
+        | otherwise                          = show (m |-> (r,c)) ++ "\t"
