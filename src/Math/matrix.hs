@@ -7,6 +7,14 @@ import GHC.TypeLits
 
 type Matrix n m a = Vec n (Vec m a)
 
+-- composition
+
+consx :: Vec n a -> Matrix n m a -> Matrix n (m+1) a
+consx v m = vmap (uncurry $ cons) $ vzip v m
+
+snocx :: Matrix n m a -> Vec n a -> Matrix n (m+1) a
+snocx m v = vmap (uncurry $ snoc) $ vzip m v
+
 -- indexing
   -- shorthand
 infixr 5 |->
@@ -114,6 +122,10 @@ matvec m v = vector $ map (\r -> dot (m <-> r) v) [0..(dimy m - 1)]
 identity :: Num a => Int -> Matrix n n a
 identity n = vector $ map row' [0..(n-1)] where
   row' i = vector $ replicate i 0 ++ 1:replicate (n-i-1) 0
+
+tensor :: Num a => Vec n a -> Vec n (Vec n a)
+tensor v = vector $ map row' [0..(dim v - 1)] where
+  row' i = vmap (* (v ! i)) v
 
 -- typesafe id constructors
 identity4 :: Num a => Matrix 4 4 a
