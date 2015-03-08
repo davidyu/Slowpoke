@@ -4,6 +4,7 @@ module Math.Matrix where
 
 import Math.Vec hiding (r,g,b,a,x,y,z,w)
 import GHC.TypeLits
+import Debug.Trace
 
 type Matrix n m a = Vec n (Vec m a)
 
@@ -174,6 +175,21 @@ det m
   | otherwise = tridet u where
     (_,u) = lu m
     tridet mat = foldl (*) 1 $ map (\i -> mat |-> (i,i)) [0..(dim mat - 1)]
+
+-- solve Ax = B for x, where A is an nxn matrix, B is a 1xn vector, and return value x is a 1xn vector
+-- assumes A is a lower triangular matrix
+forwardsub :: (Fractional a) => Matrix n n a -> Vec n a -> Vec n a
+forwardsub a b = fs a b 0 where
+  fs a b n
+    | n == dim b = b
+    | otherwise  = fs a b' (n+1) where
+      b' = b // [(n, ((b ! n) - fsum) / ann)] where
+      fsum = sum $ map (\i -> (a |-> (n,i)) * (b ! i)) [0..(n - 1)] -- a_n0 * b_0 + a_n1 * b_1 ... + a_nn-1 * b_n-1
+      ann = a |-> (n,n)
+
+
+inv :: Fractional a => Matrix n n a -> Matrix n n a
+inv m = undefined -- luinv m where
 
 -- debugging helpers
 instance (Show a) => Show (Matrix n m a) where
