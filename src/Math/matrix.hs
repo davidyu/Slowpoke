@@ -176,20 +176,27 @@ det m
     (_,u) = lu m
     tridet mat = foldl (*) 1 $ map (\i -> mat |-> (i,i)) [0..(dim mat - 1)]
 
--- solve Ax = B for x, where A is an nxn matrix, B is a 1xn vector, and return value x is a 1xn vector
+-- solve Ax = B for x using forward substitution, where A is an nxn matrix, B is a 1xn vector, and return value x is a 1xn vector
 -- assumes A is a lower triangular matrix
-forwardsub :: (Fractional a) => Matrix n n a -> Vec n a -> Vec n a
+forwardsub :: Fractional a => Matrix n n a -> Vec n a -> Vec n a
 forwardsub a b = fs a b 0 where
   fs a b n
     | n == dim b = b
     | otherwise  = fs a b' (n+1) where
       b' = b // [(n, ((b ! n) - fsum) / ann)] where
-      fsum = sum $ map (\i -> (a |-> (n,i)) * (b ! i)) [0..(n - 1)] -- a_n0 * b_0 + a_n1 * b_1 ... + a_nn-1 * b_n-1
-      ann = a |-> (n,n)
+        fsum = sum $ map (\i -> (a |-> (n,i)) * (b ! i)) [0..(n - 1)] -- a_n0 * b_0 + a_n1 * b_1 ... + a_nn-1 * b_n-1
+        ann = a |-> (n,n)
 
-
-inv :: Fractional a => Matrix n n a -> Matrix n n a
-inv m = undefined -- luinv m where
+-- solve Ax = B for x using backward substitution, where A is an nxn matrix, B is a 1xn vector, and return value x is a 1xn vector
+-- assumes A is an upper triangular matrix
+backsub :: Fractional a => Matrix n n a -> Vec n a -> Vec n a
+backsub a b = bs a b (dim b - 1) where
+  bs a b n
+    | n == -1 = b
+    | otherwise = bs a b' (n-1) where
+      b' = b // [(n, ((b ! n) - fsum) / ann)] where
+        fsum = sum $ map (\i -> (a |-> (n,i)) * (b ! i)) [(n + 1)..(dim b - 1)]
+        ann = a |-> (n,n)
 
 -- debugging helpers
 instance (Show a) => Show (Matrix n m a) where
