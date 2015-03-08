@@ -4,7 +4,6 @@ module Math.Matrix where
 
 import Math.Vec hiding (r,g,b,a,x,y,z,w)
 import GHC.TypeLits
-import Debug.Trace
 
 type Matrix n m a = Vec n (Vec m a)
 
@@ -197,6 +196,14 @@ backsub a b = bs a b (dim b - 1) where
       b' = b // [(n, ((b ! n) - fsum) / ann)] where
         fsum = sum $ map (\i -> (a |-> (n,i)) * (b ! i)) [(n + 1)..(dim b - 1)]
         ann = a |-> (n,n)
+
+inv :: Fractional a => Matrix n n a -> Matrix n n a
+inv m
+  | dimx m /= dimy m = error "matrix not square"
+  | otherwise = transpose $ vector $ map col' [0..(dim m - 1)] where
+    col' i = backsub u $ forwardsub l (id <|> i) where
+      (l,u) = lu m
+      id = identity $ dim m
 
 -- debugging helpers
 instance (Show a) => Show (Matrix n m a) where
