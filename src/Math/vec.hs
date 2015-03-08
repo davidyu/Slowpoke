@@ -54,6 +54,13 @@ vzip (Vec xs) (Vec ys) =  Vec $ V.zip xs ys
 vsum :: Num a => Vec n a -> a
 vsum (Vec xs) = V.sum xs
 
+update :: Vec n a -> [(Int, a)] -> Vec n a
+update (Vec xs) updates = Vec $ xs V.// updates
+
+infixr 5 //
+(//) :: Vec n a -> [(Int, a)] -> Vec n a
+(//) = update
+
 -- commonly used vector types
 
 type Vec2 = Vec 2 Double
