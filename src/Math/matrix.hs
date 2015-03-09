@@ -197,6 +197,12 @@ backsub a b = bs a b (dim b - 1) where
         fsum = sum $ map (\i -> (m |-> (n,i)) * (v ! i)) [(n + 1)..(dim v - 1)]
         m_nn = m |-> (n,n)
 
+-- returns the trace of a matrix
+tr :: Num a => Matrix n n a -> a
+tr m
+  | dimx m /= dimy m = error "matrix not square"
+  | otherwise = sum $ map (\i -> m |-> (i,i)) [0..(dim m - 1)]
+
 inv :: Fractional a => Matrix n n a -> Matrix n n a
 inv m
   | dimx m /= dimy m = error "matrix not square"
