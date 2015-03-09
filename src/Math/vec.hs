@@ -144,28 +144,35 @@ instance VecAccessors 4 where
   b = z
   a = w
 
--- define componentwise operations for supported numeric Vecs (just doubles and floats for now)
-instance (Floating a) => Num (Vec n a)
+-- define componentwise operations for supported numeric Vecs
+instance (Num a) => Num (Vec n a)
   where
     v1 + v2                               = vmap (uncurry (+)) $ vzip v1 v2
     v1 - v2                               = vmap (uncurry (-)) $ vzip v1 v2
     v1 * v2                               = vmap (uncurry (*)) $ vzip v1 v2
     negate                                = vmap (\v' -> -v')
-    abs                                   = norm
+    abs                                   = undefined
     signum                                = undefined
     fromInteger                           = undefined
 
+instance Fractional (Vec n Float) where
+  v1 / v2                                 = vmap (uncurry (/)) $ vzip v1 v2
+  fromRational                            = undefined
+
+instance Fractional (Vec n Double) where
+  v1 / v2                                 = vmap (uncurry (/)) $ vzip v1 v2
+  fromRational                            = undefined
 
 -- I really wish we had some notion of operator overloading in Haskell so * can be defined for scalar-vector products
 class VectorScalarOps a where
   (***) :: (Num a) => a -> Vec n a -> Vec n a
-  (///) :: (Num a) => Vec n a -> a -> Vec n a
+  (///) :: (Fractional a) => Vec n a -> a -> Vec n a
 
-instance VectorScalarOps Float where
+instance VectorScalarOps Double where
   s *** v = vmap (*s) v
   v /// s = vmap (/s) v
 
-instance VectorScalarOps Double where
+instance VectorScalarOps Float where
   s *** v = vmap (*s) v
   v /// s = vmap (/s) v
 
