@@ -107,6 +107,12 @@ instance HomogeneousMatAccessors 4 where
   sy mat = mat |-> (1,1)
   sz mat = mat |-> (2,2)
 
+instance Num a => ScalarOps (Matrix n m a) a where
+  m *** s = vmap (*** s) m
+
+instance Fractional a => ScalarFracOps (Matrix n m a) a where
+  m /// s = vmap (/// s) m
+
 -- common operations
 matmul :: Num a => Matrix n m a -> Matrix m p a -> Matrix n p a
 matmul a b = vector $ map rowc [0..(dimy a - 1)] where
