@@ -108,7 +108,7 @@ instance HomogeneousMatAccessors 4 where
   sz mat = mat |-> (2,2)
 
 instance Num a => ScalarOps (Matrix n m a) a where
-  m *** s = vmap (*** s) m
+  s *** m = vmap (s ***) m
 
 instance Fractional a => ScalarFracOps (Matrix n m a) a where
   m /// s = vmap (/// s) m
@@ -212,6 +212,23 @@ tr m
 inv :: Fractional a => Matrix n n a -> Matrix n n a
 inv m
   | dimx m /= dimy m = error "matrix not square"
+  | dim m == 2 = let d = det m
+                     t  = tr m
+                 in (1/d) *** (t *** identity 2 - m)
+  | dim m == 3 = let d = det m
+                     t = tr m
+                     t' = tr (matmul m m)
+                     mm = matmul m m
+                 in (1/d) *** ((0.5 * (t*t - t')) *** identity 3 - t *** m + mm)
+  | dim m == 4 = let d = det m
+                     t = tr m
+                     m2 = matmul m m
+                     m3 = matmul m m2
+                     t2 = tr m2
+                     t3 = tr m3
+                     a = (1/6) * ((t*t*t) - (3*t*t2) + (2*t3))
+                     b = (1/2) * ((t*t) - t2)
+                 in (1/d) *** (a *** identity 4 - b *** m + t *** m2 - m3)
   | otherwise = transpose $ vector $ map col' [0..(dim m - 1)] where
     col' i = backsub u $ forwardsub l (idm <|> i) where
       (l,u) = lu m

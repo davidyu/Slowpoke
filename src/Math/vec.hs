@@ -165,13 +165,13 @@ instance Fractional (Vec n Double) where
 
 -- I really wish we had some notion of operator overloading in Haskell so * can be defined for scalar-vector products
 class Num b => ScalarOps a b where
-  (***) :: a -> b -> a
+  (***) :: b -> a -> a
 
 class Fractional b => ScalarFracOps a b where
   (///) :: a -> b -> a
 
 instance Num a => ScalarOps (Vec n a) a where
-  v *** s = vmap (* s) v
+  s *** v = vmap (* s) v
 
 instance Fractional a => ScalarFracOps (Vec n a) a where
   v /// s = vmap (/ s) v
