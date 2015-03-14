@@ -3,6 +3,7 @@
 module Math.Matrix where
 
 import Math.Vec hiding (r,g,b,a,x,y,z,w)
+import qualified Math.Vec as V (r,g,b,a,x,y,z,w)
 import GHC.TypeLits
 
 type Matrix n m a = Vec n (Vec m a)
@@ -129,7 +130,7 @@ identity :: Num a => Int -> Matrix n n a
 identity n = vector $ map row' [0..(n-1)] where
   row' i = vector $ replicate i 0 ++ 1:replicate (n-i-1) 0
 
-tensor :: Num a => Vec n a -> Vec n (Vec n a)
+tensor :: Num a => Vec n a -> Matrix n n a
 tensor v = vector $ map row' [0..(dim v - 1)] where
   row' i = vmap (* (v ! i)) v
 
@@ -233,6 +234,38 @@ inv m
     col' i = backsub u $ forwardsub l (idm <|> i) where
       (l,u) = lu m
     idm = identity $ dim m
+
+-- graphics utilities
+
+xaxis = vec3 1 0 0
+yaxis = vec3 0 1 0
+zaxis = vec3 0 0 1
+
+rotationmat :: Vec3 -> Double -> Mat4
+rotationmat axis angle = make44 $ cos r *** identity3 + sin r *** crossmat + (1 - cos r) *** tensor axis
+  where r = angle * pi / 180
+        crossmat = mat3   0  (-z)   y
+                          z    0  (-x)
+                        (-y)   x    0
+                  where
+                    x = V.x axis
+                    y = V.y axis
+                    z = V.z axis
+
+        make44 m = snocx (snoc m (vec3 0 0 0)) (vec4 0 0 0 1)
+
+
+scalemat :: Double -> Double -> Double -> Mat4
+scalemat x y z = mat4 x 0 0 0
+                      0 y 0 0
+                      0 0 z 0
+                      0 0 0 1
+
+translationmat :: Vec3 -> Mat4
+translationmat v = mat4 1 0 0 (V.x v)
+                        0 1 0 (V.y v)
+                        0 0 1 (V.z v)
+                        0 0 0 1
 
 -- debugging helpers
 instance (Show a) => Show (Matrix n m a) where
