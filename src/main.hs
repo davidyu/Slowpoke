@@ -7,10 +7,13 @@ import Graphics.Gloss
 import Graphics.Gloss.Raster.Field
 import System.Environment
 
-import Math
+import Math.Geom.Primitives hiding (Point)
+import Math.Geom.Shapes
+import Math.Geom.Intersections
 import Parser
 import qualified Math.Vec as V
 import Math.Vec (( *** ), ( /// ))
+import Math.Matrix
 
 type Sample = (Double, Double)
 
@@ -30,16 +33,17 @@ vp p = Viewport { upperleft  = (center + (-halfw) *** right + halfh *** up')
                up' = up $ cam p
                eyedir = abs (center - eye')
                right = abs (eyedir `V.cross` up')
-               Size outputw outputh = sz p
+               Size outputw outputh = sze p
                fovy = fov $ cam p
                fovx = (fromIntegral outputw) * fovy / (fromIntegral outputh)
                halfh = V.len (center - eye') * (tan $ toRad (fovy/2))
                halfw = V.len (center - eye') * (tan $ toRad (fovx/2))
+               toRad deg = deg * pi / 180
 
 main
   = do args <- getArgs
        case args of [ input ] -> do params <- paramsFromFile input
-                                    Size screenw screenh <- return $ sz params
+                                    Size screenw screenh <- return $ sze params
                                     filename <- return $ out params
                                     case filename of "display" -> display ( InWindow input (screenw, screenh) (0, 0) ) black $ (gather params screenw screenh)
                                                                     where gather params w h = let viewport = vp params
@@ -67,15 +71,15 @@ ray eye viewport (u, v) =
       ll = lowerleft  viewport
       lr = lowerright viewport
       pt = u *** ( v *** ll + ( 1 - v ) *** ul ) + ( 1 - u ) *** ( v *** lr + ( 1 - v ) *** ur )
-  in Ray {start = eye, direction = abs (pt - eye)}
+  in Ray eye $ abs (pt - eye)
 
 -- TODO: make accumulate readable
 -- sort intersect results by t, no conditional in accumulate
-raytrace :: V.Vec3 -> Ray -> [(Shape, Material)] -> Rig -> Color
+raytrace :: V.Vec3 -> Ray -> [(Shape, Material, Mat4)] -> Rig -> Color
 raytrace eye ray [] rig   = ka rig
-raytrace eye ray objs rig = accumulate (ka rig, 1/0) rig (map (\(shape, mat) -> (intersect ray shape, mat)) objs)
-  where accumulate :: (Color, Double) -> Rig -> [(IntersectResult, Material)] -> Color
-        accumulate (c, t) rig ((NoHit, _):xs)      = accumulate (c, t) rig xs
+raytrace eye ray objs rig = accumulate (ka rig, 1/0) rig (map (\(shape, mat, xf) -> (intersect ray (shape, xf), mat)) objs)
+  where accumulate :: (Color, Double) -> Rig -> [(XsectResult, Material)] -> Color
+        accumulate (c, t) rig ((Miss, _):xs)      = accumulate (c, t) rig xs
         accumulate (c, t) rig ((Hit res, mat):xs)  = let (t', pt, n) = head res --ignore rest of res
                                                          acc = if t' < t then (computeLight (ka rig + ke mat) (lights rig) (eye) pt n mat, t') else (c, t)
                                                      in accumulate acc rig xs

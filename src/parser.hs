@@ -378,11 +378,11 @@ params cmds = let defaultMaterial = Material { kd = makeColor 0 0 0 1, ks = make
                                        CmdOutput f -> f
                                        otherwise   -> out p
                               objs' = case c of
-                                       CmdSphere x y z r -> (Sphere [record| { center = vec3 x y z, radius = r } |], mat, head xforms): objs p
+                                       CmdSphere x y z r -> (Sphere (vec3 x y z) r, mat, head xforms): objs p
                                        CmdTri v1 v2 v3 -> let v1' = (vxs p) V.! v1
                                                               v2' = (vxs p) V.! v2
                                                               v3' = (vxs p) V.! v3
-                                                          in (Triangle [record| { v1 = v1', v2 = v2', v3 = v3' } |], mat, head xforms): objs p
+                                                          in (Triangle (v1', v2', v3'), mat, head xforms): objs p
                                        otherwise -> objs p
                               mat' = case c of
                                        CmdDiffuse r g b  -> Material { kd = makeColor (double2Float r) (double2Float g) (double2Float b) 1, ks = ks mat, sh = sh mat, ke = ke mat }
