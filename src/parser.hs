@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DataKinds, QuasiQuotes #-}
 
 module Parser where
 
@@ -12,8 +12,12 @@ import Text.Parsec.String
 import qualified Text.Parsec.Token
 import Graphics.Gloss (Color, makeColor)
 
-import Math
+import Math.Matrix hiding ((<|>), (<->))
+import Math.Geom.Primitives
+import Math.Geom.Shapes
 import Math.Vec
+
+import Record
 
 data Command = CmdSize Int Int
              | CmdMaxdepth Int
@@ -341,9 +345,9 @@ data LightAttenuation = LightAttenuation { constantLightAttenuation :: Double, l
 data Light = DirectionalLight Vec3 Color | PointLight Vec3 Color deriving Show
 data Rig = Rig { ka :: Color, att :: LightAttenuation, lights :: [Light] } deriving Show
 data Params = Params { cam :: Camera
-                     , sz :: Size
+                     , sze :: Size
                      , out :: String
-                     , objs :: [(Shape, Material)]
+                     , objs :: [(Shape, Material, Mat4)]
                      , rig :: Rig
                      , vxs :: V.Vector Vec3
                      } deriving (Show)
@@ -351,7 +355,7 @@ data Params = Params { cam :: Camera
 params :: [Command] -> Params
 params cmds = let defaultMaterial = Material { kd = makeColor 0 0 0 1, ks = makeColor 0 0 0 1, sh = 0, ke = makeColor 0 0 0 1 }
                   defaultParams = Params { cam = Camera { eye = vec3 0 0 0, target = vec3 0 0 (-2), up = vec3 0 (-1) 0, fov = 20.0 }
-                                         , sz  = Size 100 100
+                                         , sze  = Size 100 100
                                          , out = "default.png"
                                          , objs = []
                                          , rig = Rig { ka = makeColor 0.2 0.2 0.2 1
@@ -367,18 +371,18 @@ params cmds = let defaultMaterial = Material { kd = makeColor 0 0 0 1, ks = make
                           let cam' = case c of
                                        CmdCamera x y z tx ty tz upx upy upz fieldofview -> Camera { eye = vec3 x y z, target = vec3 tx ty tz, up = norm $ vec3 upx upy upz, fov = fieldofview }
                                        otherwise                                        -> cam p
-                              sz'  = case c of
+                              sze' = case c of
                                        CmdSize w h -> Size w h
-                                       otherwise   -> sz p
+                                       otherwise   -> sze p
                               out' = case c of
                                        CmdOutput f -> f
                                        otherwise   -> out p
                               objs' = case c of
-                                       CmdSphere x y z r -> (Sphere { center = vec3 x y z, radius = r, transform = head xforms }, mat): objs p
+                                       CmdSphere x y z r -> (Sphere [record| { center = vec3 x y z, radius = r } |], mat, head xforms): objs p
                                        CmdTri v1 v2 v3 -> let v1' = (vxs p) V.! v1
                                                               v2' = (vxs p) V.! v2
                                                               v3' = (vxs p) V.! v3
-                                                          in (Triangle { v1 = v1', v2 = v2', v3 = v3' }, mat): objs p
+                                                          in (Triangle [record| { v1 = v1', v2 = v2', v3 = v3' } |], mat, head xforms): objs p
                                        otherwise -> objs p
                               mat' = case c of
                                        CmdDiffuse r g b  -> Material { kd = makeColor (double2Float r) (double2Float g) (double2Float b) 1, ks = ks mat, sh = sh mat, ke = ke mat }
@@ -401,7 +405,7 @@ params cmds = let defaultMaterial = Material { kd = makeColor 0 0 0 1, ks = make
                                                   CmdScale x y z -> ((head xforms) * (scalemat x y z)):(tail xforms)
                                                   otherwise -> xforms
                           in buildParam cs xforms' mat' Params { cam = cam'
-                                                               , sz = sz'
+                                                               , sze = sze'
                                                                , out = out'
                                                                , objs = objs'
                                                                , rig = rig'
