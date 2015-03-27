@@ -31,8 +31,8 @@ vp p = Viewport { upperleft  = (center + (-halfw) *** right + halfh *** up')
          where eye' = eye $ cam p
                center = target $ cam p
                up' = up $ cam p
-               eyedir = abs (center - eye')
-               right = abs (eyedir `V.cross` up')
+               eyedir = V.norm (center - eye')
+               right = V.norm (eyedir `V.cross` up')
                Size outputw outputh = sze p
                fovy = fov $ cam p
                fovx = (fromIntegral outputw) * fovy / (fromIntegral outputh)
@@ -71,7 +71,7 @@ ray eye viewport (u, v) =
       ll = lowerleft  viewport
       lr = lowerright viewport
       pt = u *** ( v *** ll + ( 1 - v ) *** ul ) + ( 1 - u ) *** ( v *** lr + ( 1 - v ) *** ur )
-  in Ray eye $ abs (pt - eye)
+  in Ray eye $ V.norm (pt - eye)
 
 -- TODO: make accumulate readable
 -- sort intersect results by t, no conditional in accumulate
@@ -89,9 +89,9 @@ raytrace eye ray objs rig = accumulate (ka rig, 1/0) rig (map (\(shape, mat, xf)
         computeLight acc (light:ls) eye pos normal mat
           = let col = case light of PointLight _ lightcol -> lightcol
                                     DirectionalLight _ lightcol -> lightcol
-                l = case light of PointLight lightpos _ -> abs (lightpos - pos)
-                                  DirectionalLight lightdir _ -> abs lightdir
-                h = abs (abs (eye - pos) + l)
+                l = case light of PointLight lightpos _ -> V.norm (lightpos - pos)
+                                  DirectionalLight lightdir _ -> V.norm lightdir
+                h = V.norm (V.norm (eye - pos) + l)
                 diffuse = (kd mat) * (greyN $ double2Float (max (normal `V.dot` l) 0))
                 specular = (ks mat) * (greyN $ double2Float ((max (normal `V.dot` h) 0) ** (sh mat)))
                 acc' = acc + col * (diffuse + specular)

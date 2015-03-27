@@ -15,7 +15,7 @@ epsilon = 0.000001
 apply :: Mat4 -> Ray -> Ray
 apply transform (Ray origin dir) =
   Ray origin' dir' where
-    origin' = origin + xyz (transform <|> 4)
+    origin' = origin + xyz (transform <|> 3)
     dir'    = xyz $ vecmat (snoc dir 0) transform
 
 data XsectResult = Miss | Hit [(Double, Point, Vec3)] -- Hit [(t, intersection point, intersection normal)]
@@ -34,13 +34,13 @@ intersect ray (Sphere center radius, xf) =
                     t2 = ((-b) + sqrt discr) / (2 * a)
                     p1 = s + t1 *** v
                     p2 = s + t2 *** v
-                    n1 = abs (p1 - ct)
-                    n2 = abs (p2 - ct)
+                    n1 = norm (p1 - ct)
+                    n2 = norm (p2 - ct)
                 in (Hit [ (t1, p1, n1), (t2, p2, n2)])
               | otherwise =
                 let t = (-b) / (2 * a)
                     p = s + t *** v
-                    n = abs (p - ct)
+                    n = norm (p - ct)
                 in (Hit [(t, p, n)])
 intersect ray (Triangle (v1, v2, v3), xf) =
   let Ray origin direction = apply (inv xf) ray
@@ -53,5 +53,5 @@ intersect ray (Triangle (v1, v2, v3), xf) =
       t = x result
       u = y result
       v = z result
-  in if isBarycentric u v && t > 0 then Hit [(t, origin + t *** direction, abs n)] else Miss
+  in if isBarycentric u v && t > 0 then Hit [(t, origin + t *** direction, norm n)] else Miss
     where isBarycentric u v = u >= 0.0 && v >= 0.0 && (u + v) - 1.0 <= epsilon
