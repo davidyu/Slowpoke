@@ -40,20 +40,23 @@ vp p = Viewport { upperleft  = (center + (-halfw) *** right + halfh *** up')
                halfw = V.len (center - eye') * (tan $ toRad (fovx/2))
                toRad deg = deg * pi / 180
 
-main
-  = do args <- getArgs
-       case args of [ input ] -> do params <- paramsFromFile input
-                                    Size screenw screenh <- return $ sze params
-                                    filename <- return $ out params
-                                    case filename of "display" -> display ( InWindow input (screenw, screenh) (0, 0) ) black $ (gather params screenw screenh)
-                                                                    where gather params w h = let viewport = vp params
-                                                                                                  eye' = eye $ cam params
-                                                                                              in makePicture w h 1 1 (\p -> raytrace eye' (ray eye' viewport (glossPointToSample p)) (objs params) (rig params) )
-                                                     otherwise -> writePng filename $ generateImage (gather params screenw screenh) screenw screenh
-                                                                    where gather params w h x y = let viewport = vp params
-                                                                                                      eye' = eye $ cam params
-                                                                                                  in colorToPixel $ raytrace eye' (ray eye' viewport ( 1 - (fromIntegral x) / (fromIntegral w), (fromIntegral y) / (fromIntegral h) ) ) (objs params) (rig params)
-                    otherwise -> print "usage: ./main input.txt"
+main = do args <- getArgs
+          case args of [input]   -> do params <- paramsFromFile input
+                                       drawWrapper params input
+                       otherwise -> print "usage: ./main input.txt"
+
+drawWrapper :: Params -> String -> IO()
+drawWrapper params title
+  = let Size screenw screenh = sze params
+        filename             = out params
+    in case filename of "display" -> display (InWindow title (screenw, screenh) (0, 0)) black $ (gather params screenw screenh) where
+                                       gather params w h = makePicture w h 1 1 (\p -> raytrace eye' (ray eye' viewport (glossPointToSample p)) (objs params) (rig params)) where
+                                         viewport = vp params
+                                         eye' = eye $ cam params
+                        otherwise -> writePng filename $ generateImage (gather params screenw screenh) screenw screenh where
+                                       gather params w h x y = colorToPixel $ raytrace eye' (ray eye' viewport (1 - (fromIntegral x) / (fromIntegral w), (fromIntegral y) / (fromIntegral h))) (objs params) (rig params) where
+                                         viewport = vp params
+                                         eye' = eye $ cam params
 
 -- interpolates from (-1, 1) to (0, 1)
 glossPointToSample :: Point -> Sample
