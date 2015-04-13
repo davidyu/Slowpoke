@@ -47,34 +47,37 @@ main = do args <- getArgs
 
 drawWrapper :: Params -> String -> IO()
 drawWrapper params title
-  = let Size screenw screenh = sze params
-        filename             = out params
-    in case filename of "display" -> display (InWindow title (screenw, screenh) (0, 0)) black $ (gather params screenw screenh) where
-                                       gather params w h = makePicture w h 1 1 (\p -> raytrace eye' (ray eye' viewport (glossPointToSample p)) (objs params) (rig params)) where
-                                         viewport = vp params
-                                         eye' = eye $ cam params
-                        otherwise -> writePng filename $ generateImage (gather params screenw screenh) screenw screenh where
-                                       gather params w h x y = colorToPixel $ raytrace eye' (ray eye' viewport (1 - (fromIntegral x) / (fromIntegral w), (fromIntegral y) / (fromIntegral h))) (objs params) (rig params) where
-                                         viewport = vp params
-                                         eye' = eye $ cam params
-
--- interpolates from (-1, 1) to (0, 1)
-glossPointToSample :: Point -> Sample
-glossPointToSample (x, y) = (1 - (float2Double x + 1)/2, 1 - (float2Double y + 1)/2)
-
--- translation from gloss color to codec picture pixel
-colorToPixel :: Color -> PixelRGB8
-colorToPixel c = let ( r, g, b, _ ) = rgbaOfColor c
-                 in PixelRGB8 (round (r * 255)) (round (g * 255)) (round (b * 255))
-
-ray :: V.Vec3 -> Viewport -> Sample -> Ray
-ray eye viewport (u, v) =
-  let ul = upperleft  viewport
-      ur = upperright viewport
-      ll = lowerleft  viewport
-      lr = lowerright viewport
-      pt = u *** ( v *** ll + ( 1 - v ) *** ul ) + ( 1 - u ) *** ( v *** lr + ( 1 - v ) *** ur )
-  in Ray eye $ V.norm (pt - eye)
+  | filename == "display" = display (InWindow title (w, h) (0, 0)) black buf
+  | otherwise             = writePng filename $ generateImage gather w h where
+                              buf = makePicture w h 1 1 trace where
+                                trace p = raytrace eye' (shoot eye' viewport (p2s p)) objects lightrig where
+                                  -- interpolates from (-1, 1) to (0, 1)
+                                  p2s :: Point -> Sample
+                                  p2s (x, y) = (1 - (float2Double x + 1)/2, 1 - (float2Double y + 1)/2)
+                              gather x y = c2p $ trace where
+                                trace = raytrace eye' (shoot eye' viewport $ xy2s x y w h) objects lightrig where
+                                  -- interpolates from inverted X screen space to (0, 1)
+                                  xy2s x y w h = (1 - fromIntegral x/fromIntegral w, fromIntegral y/fromIntegral h)
+                                -- interpolates from (0,1) to (0,255)
+                                c2p :: Color -> PixelRGB8
+                                c2p c = let (r,g,b,_) = rgbaOfColor c
+                                        in PixelRGB8 (expand r) (expand g) (expand b) where
+                                             expand v = round (v * 255)
+                              -- shoot ray from viewport to scene
+                              shoot :: V.Vec3 -> Viewport -> Sample -> Ray
+                              shoot eye viewport (u, v) =
+                                let ul = upperleft  viewport
+                                    ur = upperright viewport
+                                    ll = lowerleft  viewport
+                                    lr = lowerright viewport
+                                    pt = u *** ( v *** ll + ( 1 - v ) *** ul ) + ( 1 - u ) *** ( v *** lr + ( 1 - v ) *** ur )
+                                in Ray eye $ V.norm (pt - eye)
+                              Size w h = sze params
+                              filename = out params
+                              viewport = vp params
+                              eye'     = eye $ cam params
+                              objects  = objs params
+                              lightrig = rig params
 
 -- TODO: make accumulate readable
 -- sort intersect results by t, no conditional in accumulate
