@@ -6,8 +6,6 @@ import Math.Vec
 import Math.Matrix
 import Math.Geom.Primitives
 import Math.Geom.Shapes
-import Record
-import Record.Lens
 
 epsilon = 0.000001
 

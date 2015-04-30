@@ -17,8 +17,6 @@ import Math.Geom.Primitives
 import Math.Geom.Shapes
 import Math.Vec
 
-import Record
-
 data Command = CmdSize Int Int
              | CmdMaxdepth Int
              | CmdOutput String
