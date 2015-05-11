@@ -31,8 +31,8 @@ vp p = Viewport { upperleft  = (center + (-halfw) *** right + halfh *** up')
          where eye' = eye $ cam p
                center = target $ cam p
                up' = up $ cam p
-               eyedir = V.norm (center - eye')
-               right = V.norm (eyedir `V.cross` up')
+               right = V.norm (eyedir `V.cross` up') where
+                         eyedir = V.norm (center - eye')
                Size outputw outputh = sze p
                fovy = fov $ cam p
                fovx = (fromIntegral outputw) * fovy / (fromIntegral outputh)
