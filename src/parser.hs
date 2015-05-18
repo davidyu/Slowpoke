@@ -51,7 +51,7 @@ spec = do
 command :: Parser Command
 command =  size <|> maxdepth <|> output <|>
            camera <|>
-           sphere <|> maxverts <|> vertex <|> tri <|>
+           box <|> sphere <|> maxverts <|> vertex <|> tri <|>
            translate <|> rotate <|> scale <|> pushTransform <|> popTransform <|>
            directional <|> point <|> attenuation <|> ambient <|>
            diffuse <|> specular <|> shininess <|> emission <|>
