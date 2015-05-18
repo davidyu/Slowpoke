@@ -1,5 +1,3 @@
-{-# LANGUAGE QuasiQuotes #-}
-
 module Math.Geom.Intersections where
 
 import Math.Vec
@@ -17,6 +15,18 @@ apply transform (Ray origin dir) =
     dir'    = xyz $ vecmat (snoc dir 0) transform
 
 data XsectResult = Miss | Hit [(Double, Point, Vec3)] -- Hit [(t, intersection point, intersection normal)]
+
+-- utility; ray plane intersection
+-- ideally this is folded into intersect
+rayplane :: Ray -> Plane -> XsectResult
+rayplane ray (Plane point normal) = 
+  if denom == 0 then Miss -- line is parallel to the plane, treat as if miss
+  else Hit [(t, p, normal)]
+    where Ray origin direction = ray
+          denom = dot normal direction
+          d = dot (-normal) point
+          t = -((dot normal origin) + d) / denom
+          p = ray |@| t
 
 intersect :: Ray -> (Shape, Mat4) -> XsectResult
 intersect ray (Sphere center radius, xf) =
@@ -53,3 +63,5 @@ intersect ray (Triangle (v1, v2, v3), xf) =
       v = z result
   in if isBarycentric u v && t > 0 then Hit [(t, origin + t *** direction, norm n)] else Miss
     where isBarycentric u v = u >= 0.0 && v >= 0.0 && (u + v) - 1.0 <= epsilon
+intersect ray (Box dim, _) =
+  undefined

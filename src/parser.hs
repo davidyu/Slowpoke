@@ -22,7 +22,7 @@ data Command = CmdSize Int Int
              | CmdOutput String
              | CmdCamera Double Double Double Double Double Double Double Double Double Double
              | CmdSphere Double Double Double Double
-             | CmdBox Point Vec3
+             | CmdBox Vec3
              | CmdMaxVerts Int
              | CmdVertex Double Double Double
              | CmdTri Int Int Int
@@ -145,19 +145,13 @@ box :: Parser Command
 box = do
   try $ string "box"
   whitespace
-  x <- double
-  whitespace
-  y <- double
-  whitespace
-  z <- double
-  whitespace
   w <- double
   whitespace
   h <- double
   whitespace
   l <- double
   eol
-  return $ CmdBox (vec3 x y z) (vec3 w h l)
+  return $ CmdBox (vec3 w h l)
 
 maxverts :: Parser Command
 maxverts = do
@@ -400,7 +394,7 @@ params cmds = let defaultMaterial = Material { kd = makeColor 0 0 0 1, ks = make
                                                               v2' = (vxs p) V.! v2
                                                               v3' = (vxs p) V.! v3
                                                           in (Triangle (v1', v2', v3'), mat, head xforms): objs p
-                                       CmdBox center dim -> (Box center dim, mat, head xforms): objs p
+                                       CmdBox dim -> (Box dim, mat, head xforms): objs p
                                        otherwise -> objs p
                               mat' = case c of
                                        CmdDiffuse r g b  -> Material { kd = makeColor (double2Float r) (double2Float g) (double2Float b) 1, ks = ks mat, sh = sh mat, ke = ke mat }
