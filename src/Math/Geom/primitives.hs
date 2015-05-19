@@ -15,16 +15,25 @@ infixr 5 |@|
 (|@|) :: Ray -> Double -> Point
 (|@|) = at
 
-class Distance m n where
+class ComparablePrimitivePair m n where
   dist :: m -> n -> Double
 
-instance Distance Point Point where
+instance ComparablePrimitivePair Point Point where
   dist a b = len (a - b)
 
-instance Distance Point Plane where
-  dist pt plane = len (pt - planept) where
-                    Plane planept _ = plane
+-- TODO eliminate these extra normalizes; maybe there is a way to mark a vector as normalized?
 
-instance Distance Plane Point where
-  dist plane pt = len (planept - pt) where
-                    Plane planept _ = plane
+instance ComparablePrimitivePair Point Plane where
+  dist pt plane = dot (pt - planept) $ norm n where
+                    Plane planept n = plane
+
+instance ComparablePrimitivePair Plane Point where
+  dist plane pt = dot (planept - pt) $ norm n where
+                    Plane planept n = plane
+
+instance ComparablePrimitivePair Plane Plane where
+  dist a b = if norm n1 == norm n2
+             then dot (p1 - p2) $ norm n1
+             else 0 where
+               Plane p1 n1 = a
+               Plane p2 n2 = b

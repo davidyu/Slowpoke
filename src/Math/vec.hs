@@ -54,6 +54,9 @@ vzip (Vec xs) (Vec ys) =  Vec $ V.zip xs ys
 vsum :: Num a => Vec n a -> a
 vsum (Vec xs) = V.sum xs
 
+vfoldl :: (b -> a -> b) -> b -> Vec n a -> b
+vfoldl f start (Vec xs) = V.foldl f start xs
+
 update :: Vec n a -> [(Int, a)] -> Vec n a
 update (Vec xs) updates = Vec $ xs V.// updates
 
@@ -143,6 +146,10 @@ instance VecAccessors 4 where
   g = y
   b = z
   a = w
+
+instance Eq a => Eq (Vec n a) where
+  -- v1 is equal to v2 if every element of v1 is equal to every element of v2
+  v1 == v2                                = vfoldl (&&) True $ vmap (uncurry (==)) $ vzip v1 v2
 
 -- define componentwise operations for supported numeric Vecs
 instance Num a => Num (Vec n a)
