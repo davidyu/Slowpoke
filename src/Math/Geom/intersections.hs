@@ -64,4 +64,23 @@ intersect ray (Triangle (v1, v2, v3), xf) =
   in if isBarycentric u v && t > 0 then Hit [(t, origin + t *** direction, norm n)] else Miss
     where isBarycentric u v = u >= 0.0 && v >= 0.0 && (u + v) - 1.0 <= epsilon
 intersect ray (Box dim, _) =
-  undefined
+  let d = dot (-n) planept
+      t = -(dot n origin + d) / (dot n direction)
+      ipt = ray |@| t
+  in if x ipt >= -x dim && x ipt <= x dim && y ipt >= -y dim && y ipt <= y dim && z ipt >= -z dim && z ipt <= z dim
+     then Hit [(t, ipt, n)]
+     else Miss
+      where Ray origin direction = ray
+            Plane n planept = [ Plane (vec3 (x dim) 0 0)  (vec3 (x dim) 0 0)
+                              , Plane (vec3 (-x dim) 0 0) (vec3 (-x dim) 0 0)
+                              , Plane (vec3 0 (y dim) 0)  (vec3 0 (y dim) 0)
+                              , Plane (vec3 0 (-y dim) 0) (vec3 0 (-y dim) 0)
+                              , Plane (vec3 0 0 (z dim))  (vec3 0 0 (z dim))
+                              , Plane (vec3 0 0 (-z dim)) (vec3 0 0 (-z dim))
+                              ] `closestTo` origin
+            closestTo :: [Plane] -> Point -> Plane
+            closestTo (p:ps) pt = closestTo' ps pt (dist pt p, p) where
+                                   closestTo' (plane:ps) pt (closestDist, closestPlane) =
+                                     if dist pt plane < closestDist then closestTo' ps pt (dist pt plane, plane)
+                                                                    else closestTo' ps pt (closestDist, closestPlane)
+                                   closestTo' [] _ (_, closestPlane) = closestPlane
