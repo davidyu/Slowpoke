@@ -1,11 +1,13 @@
 module Math.Geom.Intersections where
 
+import Debug.Trace
 import Math.Vec
 import Math.Matrix
 import Math.Geom.Primitives
 import Math.Geom.Shapes
 
 epsilon = 0.000001
+infinity = 1/0
 
 -- applies transform to ray
 apply :: Mat4 -> Ray -> Ray
@@ -63,24 +65,39 @@ intersect ray (Triangle (v1, v2, v3), xf) =
       v = z result
   in if isBarycentric u v && t > 0 then Hit [(t, origin + t *** direction, norm n)] else Miss
     where isBarycentric u v = u >= 0.0 && v >= 0.0 && (u + v) - 1.0 <= epsilon
-intersect ray (Box dim, _) =
-  let d = dot (-n) planept
-      t = -(dot n origin + d) / (dot n direction)
+intersect ray (Box dim, xf) =
+  let dx = dot xnormal direction
+      xt = if dx /= 0 then -(dot xnormal origin + dot (-xnormal) xpt) / dx else (-1)
+      dy = dot ynormal direction
+      yt = if dy /= 0 then -(dot ynormal origin + dot (-ynormal) ypt) / dy else (-1)
+      dz = dot znormal direction
+      zt = if dz /= 0 then -(dot znormal origin + dot (-znormal) zpt) / dz else (-1)
+      candidates = filter (/= (-1)) [xt, yt, zt]
+      t = if length candidates > 0 then findClosestValidT candidates else (-1)
+      n = if t == (-1) then (vec3 (-1) (-1) (-1)) else if t == xt then xnormal else if yt == t then ynormal else znormal
       ipt = ray |@| t
-  in if x ipt >= -x dim && x ipt <= x dim && y ipt >= -y dim && y ipt <= y dim && z ipt >= -z dim && z ipt <= z dim
-     then Hit [(t, ipt, n)]
-     else Miss
-      where Ray origin direction = ray
-            Plane n planept = [ Plane (vec3 (x dim) 0 0)  (vec3 (x dim) 0 0)
-                              , Plane (vec3 (-x dim) 0 0) (vec3 (-x dim) 0 0)
-                              , Plane (vec3 0 (y dim) 0)  (vec3 0 (y dim) 0)
-                              , Plane (vec3 0 (-y dim) 0) (vec3 0 (-y dim) 0)
-                              , Plane (vec3 0 0 (z dim))  (vec3 0 0 (z dim))
-                              , Plane (vec3 0 0 (-z dim)) (vec3 0 0 (-z dim))
-                              ] `closestTo` origin
-            closestTo :: [Plane] -> Point -> Plane
-            closestTo (p:ps) pt = closestTo' ps pt (dist pt p, p) where
-                                   closestTo' (plane:ps) pt (closestDist, closestPlane) =
-                                     if dist pt plane < closestDist then closestTo' ps pt (dist pt plane, plane)
-                                                                    else closestTo' ps pt (closestDist, closestPlane)
-                                   closestTo' [] _ (_, closestPlane) = closestPlane
+  in if t /= -1 then trace "hit" $ Hit [(t, ipt, n)]
+                else trace "miss" $ Miss
+       where Ray origin direction = ray
+             Plane xnormal xpt = [ Plane (vec3 (x dim/2 + tx xf) (ty xf) (tz xf))  (norm $ vec3 (x dim) 0 0)
+                                 , Plane (vec3 (-x dim/2 + tx xf) (ty xf) (tz xf)) (norm $ vec3 (-x dim) 0 0)
+                                 ] `closestTo` origin
+             Plane ynormal ypt = [ Plane (vec3 (tx xf) (y dim/2 + ty xf) (tz xf))  (norm $ vec3 0 (y dim) 0)
+                                 , Plane (vec3 (tx xf) (-y dim/2 + ty xf) (tz xf)) (norm $ vec3 0 (-y dim) 0)
+                                 ] `closestTo` origin
+             Plane znormal zpt = [ Plane (vec3 (tx xf) (ty xf) (z dim/2 + tz xf))  (norm $ vec3 0 0 (z dim))
+                                 , Plane (vec3 (tx xf) (ty xf) (-z dim/2 + tz xf)) (norm $ vec3 0 0 (-z dim))
+                                 ] `closestTo` origin
+             closestTo :: [Plane] -> Point -> Plane
+             closestTo (p:ps) pt = closestTo' ps pt (dist pt p, p) where
+                                    closestTo' (plane:ps) pt (closestDist, closestPlane) =
+                                      if dist pt plane < closestDist then closestTo' ps pt (dist pt plane, plane)
+                                                                     else closestTo' ps pt (closestDist, closestPlane)
+                                    closestTo' [] _ (_, closestPlane) = closestPlane
+             findClosestValidT ts = f' ts infinity where
+                                     f' (t:ts) closest = if t < closest
+                                                         && x ipt >= (-(x dim)/2 + tx xf) && x ipt <= (x dim/2 + tx xf)
+                                                         && y ipt >= (-(y dim)/2 + ty xf) && y ipt <= (y dim/2 + ty xf)
+                                                         && z ipt >= (-(z dim)/2 + tz xf) && z ipt <= (z dim/2 + tz xf) then f' ts t else f' ts closest where
+                                                           ipt = ray |@| t
+                                     f' [] closest     = closest
