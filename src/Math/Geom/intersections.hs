@@ -65,6 +65,7 @@ intersect ray (Triangle (v1, v2, v3), xf) =
       v = z result
   in if isBarycentric u v && t > 0 then Hit [(t, origin + t *** direction, norm n)] else Miss
     where isBarycentric u v = u >= 0.0 && v >= 0.0 && (u + v) - 1.0 <= epsilon
+intersect ray (Quad normal tl w h, xf) = undefined
 intersect ray (Box dim, xf) =
   let dx = dot xnormal direction
       xt = if dx /= 0 then -(dot xnormal origin + dot (-xnormal) xpt) / dx else (-1)
