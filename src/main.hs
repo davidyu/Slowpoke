@@ -9,7 +9,6 @@ import System.Environment
 
 import Math.Geom.Primitives hiding (Point)
 import Math.Geom.Shapes
-import Math.Geom.Intersections
 import Parser
 import qualified Math.Vec as V
 import Math.Vec (( *** ), ( /// ))

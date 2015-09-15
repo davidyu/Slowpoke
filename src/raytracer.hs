@@ -1,10 +1,7 @@
 module Raytracer where
 
-import Data.Char
 import GHC.Float
 import Graphics.Gloss
-import Graphics.Gloss.Raster.Field
-import System.Environment
 
 import Math.Geom.Primitives hiding (Point)
 import Math.Geom.Shapes
