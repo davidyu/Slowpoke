@@ -16,6 +16,7 @@ import Math.Matrix hiding ((<|>), (<->))
 import Math.Geom.Primitives
 import Math.Geom.Shapes
 import Math.Vec
+import Scene
 
 data Command = CmdSize Int Int
              | CmdMaxdepth Int
@@ -371,24 +372,10 @@ test = parseTest spec "size 256 256\ncamera 1 0.2 1 1 1 1 20\noutput out.png"
 testFile :: IO (Either ParseError [Command])
 testFile = parseFromFile spec "test.txt"
 
-data Camera = Camera { eye :: Vec3, target :: Vec3, up :: Vec3, fov :: Double } deriving Show
-data Size = Size Int Int deriving Show
--- kd = diffuse, ks = specular, sh = shininess, ke = emission
-data Material = Material { kd :: Color, ks :: Color, sh :: Double, ke :: Color } deriving Show
-data LightAttenuation = LightAttenuation { constantLightAttenuation :: Double, linearLightAttenuation :: Double, quadraticLightAttenuation :: Double } deriving Show
-data Light = DirectionalLight Vec3 Color | PointLight Vec3 Color deriving Show
-data Rig = Rig { ka :: Color, att :: LightAttenuation, lights :: [Light] } deriving Show
-data Params = Params { cam :: Camera
-                     , sze :: Size
-                     , out :: String
-                     , objs :: [(Shape, Material, Mat4)]
-                     , rig :: Rig
-                     , vxs :: V.Vector Vec3
-                     } deriving (Show)
 
-params :: [Command] -> Params
+params :: [Command] -> Scene
 params cmds = let defaultMaterial = Material { kd = makeColor 0 0 0 1, ks = makeColor 0 0 0 1, sh = 0, ke = makeColor 0 0 0 1 }
-                  defaultParams = Params { cam = Camera { eye = vec3 0 0 0, target = vec3 0 0 (-2), up = vec3 0 (-1) 0, fov = 20.0 }
+                  defaultScene = Scene { cam = Camera { eye = vec3 0 0 0, target = vec3 0 0 (-2), up = vec3 0 (-1) 0, fov = 20.0 }
                                          , sze  = Size 100 100
                                          , out = "default.png"
                                          , objs = []
@@ -398,8 +385,8 @@ params cmds = let defaultMaterial = Material { kd = makeColor 0 0 0 1, ks = make
                                                      }
                                          , vxs = V.empty
                                          }
-              in buildParam cmds [identity4] defaultMaterial defaultParams
-                  where buildParam :: [Command] -> [Mat4] -> Material -> Params -> Params
+              in buildParam cmds [identity4] defaultMaterial defaultScene
+                  where buildParam :: [Command] -> [Mat4] -> Material -> Scene -> Scene
                         buildParam [] xforms mat p = p
                         buildParam (c:cs) xforms mat p =
                           let cam' = case c of
@@ -440,7 +427,7 @@ params cmds = let defaultMaterial = Material { kd = makeColor 0 0 0 1, ks = make
                                                   CmdRotate axis angle -> ((head xforms) * (rotationmat axis angle)):(tail xforms)
                                                   CmdScale x y z -> ((head xforms) * (scalemat x y z)):(tail xforms)
                                                   otherwise -> xforms
-                          in buildParam cs xforms' mat' Params { cam = cam'
+                          in buildParam cs xforms' mat' Scene { cam = cam'
                                                                , sze = sze'
                                                                , out = out'
                                                                , objs = objs'
@@ -448,18 +435,18 @@ params cmds = let defaultMaterial = Material { kd = makeColor 0 0 0 1, ks = make
                                                                , vxs = vxs'
                                                                }
 
-testParams :: Params
-testParams = params commands
+testScene :: Scene
+testScene = params commands
   where commands = case parse spec "" "size 256 256\ncamera 1 0.2 1 1 1 1 20\noutput out.png" of
                      Left err -> []
                      Right cs -> cs
 
-testParamsFromFile :: IO (Params)
-testParamsFromFile = params <$> commands
+testSceneFromFile :: IO (Scene)
+testSceneFromFile = params <$> commands
   where commands = parseFromFile spec "test.txt" >>= either empty return
         empty err = return []
 
-paramsFromFile :: String -> IO (Params)
+paramsFromFile :: String -> IO (Scene)
 paramsFromFile filename = params <$> commands
   where commands = parseFromFile spec filename >>= either empty return
         empty err = trace (show err) return []

@@ -14,6 +14,7 @@ import qualified Math.Vec as V
 import Math.Vec (( *** ), ( /// ))
 import Math.Matrix
 
+import Scene
 import Raytracer
 
 type Sample = (Double, Double)
@@ -24,7 +25,7 @@ data Viewport = Viewport { upperleft  :: V.Vec3
                          , lowerright :: V.Vec3
                          } deriving (Show)
 
-vp :: Params -> Viewport
+vp :: Scene -> Viewport
 vp p = Viewport { upperleft  = (center + (-halfw) *** right + halfh *** up')
                 , upperright = (center + halfw *** right + halfh *** up')
                 , lowerright = (center + halfw *** right + (-halfh) *** up')
@@ -46,7 +47,7 @@ main = do args <- getArgs
                                        drawWrapper params input
                        otherwise -> print "usage: ./main input.txt"
 
-drawWrapper :: Params -> String -> IO()
+drawWrapper :: Scene -> String -> IO()
 drawWrapper params title
   | filename == "display" = display (InWindow title (w, h) (0, 0)) black buf
   | otherwise             = writePng filename $ generateImage gather w h where
