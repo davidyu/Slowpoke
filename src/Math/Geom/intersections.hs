@@ -65,13 +65,23 @@ intersect ray (Triangle (v1, v2, v3), xf) =
       v = z result
   in if isBarycentric u v && t > 0 then Hit [(t, origin + t *** direction, norm n)] else Miss
     where isBarycentric u v = u >= 0.0 && v >= 0.0 && (u + v) - 1.0 <= epsilon
+
 intersect ray (Quad (a, b, c, d), xf) = 
+  -- delegate ray-quad to ray-triangle intersection test:
+  -- assuming a b c d is in CW orientation
+  -- if ray is on the right side of line ac (a is above c), then we know ray will not intersect with
+  -- triangle dac, so we check if ray intersects with triangle dac, vice-versa if ray is on the left
+  -- side of line ac.
+  -- ray-line check is based on scalar triple product of ray, oc, and oa. Use the right-hand rule to intuit
+  -- the result of the scalar triple product, it will give you a good intuition of where the ray lies
+  -- relative to line ca
   let Ray o dir = apply (inv xf) ray
-      oc = c - o
-      oa = a - o
-      m = oc `cross` dir
-  in if oa `dot` m >= 0 then intersect ray (Triangle (a, b, c), xf)
-                        else intersect ray (Triangle (d, a, c), xf)
+      oc  = c - o
+      oa  = a - o
+      stp = oa `dot` (oc `cross` dir)
+  in if stp >= 0 then intersect ray (Triangle (a, b, c), xf)
+                 else intersect ray (Triangle (d, a, c), xf)
+
 intersect ray (Box dim, xf) =
   let dx = dot xnormal direction
       xt = if dx /= 0 then -(dot xnormal origin + dot (-xnormal) xpt) / dx else (-1)
