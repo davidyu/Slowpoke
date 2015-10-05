@@ -24,7 +24,7 @@ data Command = CmdSize Int Int
              | CmdCamera Double Double Double Double Double Double Double Double Double Double
              | CmdSphere Double Double Double Double
              | CmdBox Vec3
-             | CmdQuad Vec3 Vec3 Double Double
+             | CmdQuad Vec3 Vec3 Vec3 Vec3
              | CmdMaxVerts Int
              | CmdVertex Double Double Double
              | CmdTri Int Int Int
@@ -159,23 +159,31 @@ quad :: Parser Command
 quad = do
   try $ string "quad"
   whitespace
-  xn <- double
+  x1 <- double
   whitespace
-  yn <- double
+  y1 <- double
   whitespace
-  zn <- double
+  z1 <- double
   whitespace
-  x <- double
+  x2 <- double
   whitespace
-  y <- double
+  y2 <- double
   whitespace
-  z <- double
+  z2 <- double
   whitespace
-  w <- double
+  x3 <- double
   whitespace
-  h <- double
+  y3 <- double
+  whitespace
+  z3 <- double
+  whitespace
+  x4 <- double
+  whitespace
+  y4 <- double
+  whitespace
+  z4 <- double
   eol
-  return $ CmdQuad (vec3 xn yn zn) (vec3 x y z) w h
+  return $ CmdQuad (vec3 x1 y1 z1) (vec3 x2 y2 z2) (vec3 x3 y3 z3) (vec3 x4 y4 z4)
 
 maxverts :: Parser Command
 maxverts = do
@@ -405,7 +413,7 @@ params cmds = let defaultMaterial = Material { kd = makeColor 0 0 0 1, ks = make
                                                               v3' = (vxs p) V.! v3
                                                           in (Triangle (v1', v2', v3'), mat, head xforms): objs p
                                        CmdBox dim -> (Box dim, mat, head xforms): objs p
-                                       CmdQuad normal topleft w h -> (Quad normal topleft w h, mat, head xforms): objs p
+                                       CmdQuad a b c d -> (Quad (a, b, c, d), mat, head xforms): objs p
                                        otherwise -> objs p
                               mat' = case c of
                                        CmdDiffuse r g b  -> Material { kd = makeColor (double2Float r) (double2Float g) (double2Float b) 1, ks = ks mat, sh = sh mat, ke = ke mat }
