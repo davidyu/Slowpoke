@@ -1,0 +1,1 @@
+/EHsc ..\src\bmp.cpp ..\src\main.cpp ..\src\tracer.cpp -I..\src 
