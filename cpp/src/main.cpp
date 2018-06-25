@@ -4,14 +4,16 @@
 #include <pthread.h> 
 #include <queue>
 #include "tracer.h"
-#include "vec.hpp"
-#include "color.hpp"
+#include "vector.h"
+#include "color.h"
 #include "sphere.h"
 #include "plane.h"
 
 #include "lambertian.h"
 #include "metallic.h"
 #include "dielectric.h"
+
+using namespace gml;
 
 const int NUM_THREADS = 4;
 
@@ -42,8 +44,8 @@ void * renderTile( void * t ) {
 
     for ( int y = threadId * threadSize; y < ( threadId + 1 ) * threadSize; y++ ) {
         for ( int x = 0; x < params.w; x++ ) {
-            uv.u = (float) x / params.w;
-            uv.v = (float) y / params.h;
+            uv.x = (float) x / params.w;
+            uv.y = (float) y / params.h;
             params.bmp->SetPixel( x, y, degamma( params.rt.trace( uv, pixelSize, params.numBounces ) ) );
         }
     }
@@ -71,8 +73,8 @@ void * startWorker( void * t ) {
         Vec2 uv;
         const Vec2 pixelSize = { 1.f / params.w, 1.f / params.h };
         for ( int x = 0; x < params.w; x++ ) {
-            uv.u = (float) x / params.w;
-            uv.v = (float) y / params.h;
+            uv.x = (float) x / params.w;
+            uv.y = (float) y / params.h;
             params.bmp->SetPixel( x, y, degamma( params.rt.trace( uv, pixelSize, params.numBounces ) ) );
         }
     }
@@ -129,8 +131,8 @@ int main( int argc, char **argv ) {
             const Vec2 pixelSize = { 1.f / params.w, 1.f / params.h };
             for ( int y = 0; y < params.h; y++ ) {
                 for ( int x = 0; x < params.w; x++ ) {
-                    uv.u = (float) x / params.w;
-                    uv.v = (float) y / params.h;
+                    uv.x = (float) x / params.w;
+                    uv.y = (float) y / params.h;
                     params.bmp->SetPixel( x, y, degamma( params.rt.trace( uv, pixelSize, params.numBounces ) ) );
                 }
             }

@@ -1,11 +1,13 @@
 #include "tracer.h"
-#include "primitives.hpp"
+#include "primitives.h"
 #include <cstdlib>
 #include <cmath>
 
 #if defined( DEBUG )
 #include "gml_debug.hpp"
 #endif
+
+using namespace gml;
 
 struct IntersectionResult {
     Object * obj    = NULL;
@@ -70,8 +72,8 @@ Color Tracer::trace( const Vec2& uv, const Vec2& pixelSize, uint8 bouncesRemaini
     // point on plane = center of plane + planeWidth * ( ( x - 0.5 ) * camera.right ) + planeHeight * ( ( y - 0.5 ) * camera.up )
     // direction = point on plane - camera.pos
     Vec3 target = origin
-                + camera.right * focusPlaneWidth  * ( uv.u - 0.5 )
-                + camera.up    * focusPlaneHeight * ( uv.v - 0.5 )
+                + camera.right * focusPlaneWidth  * ( uv.x - 0.5 )
+                + camera.up    * focusPlaneHeight * ( uv.y - 0.5 )
                 + camera.aim   * ( camera.focalLength + camera.depthOfFocus );
 
     // check for intersections with each object in scene

@@ -23,7 +23,7 @@ FORCE_INCLUDE=-include rtstd.h
 
 ALL.O = src/bmp.o src/main.o src/tracer.o\
 		src/materials/lambertian.o src/materials/metallic.o src/materials/dielectric.o\
-		src/gml/src/mat.o src/gml/src/collision.o
+		src/gml/src/matrix.o src/gml/src/collision.o
 
 ALL.H = $(wildcard src/*.h)
 

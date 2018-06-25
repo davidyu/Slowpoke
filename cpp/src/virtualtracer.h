@@ -1,6 +1,6 @@
 #pragma once
 
-#include "primitives.hpp"
+#include "primitives.h"
 
 struct VirtualTracerContext {
     uint nBouncesRemaining = 0;
@@ -9,5 +9,5 @@ struct VirtualTracerContext {
 
 class VirtualTracer {
 public:
-    virtual Color trace( gml::Ray ray, uint8 bouncesRemaining ) = 0;
+    virtual gml::Color trace( gml::Ray ray, uint8 bouncesRemaining ) = 0;
 };

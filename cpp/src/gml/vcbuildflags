@@ -1,0 +1,1 @@
+-Zi /EHsc ..\test\test.cpp ..\test\test_compile.cpp ..\test\test_color.cpp ..\test\test_vector.cpp ..\test\test_matrix.cpp ..\src\matrix.cpp ..\src\collision.cpp /I..\src /I..\test\lib

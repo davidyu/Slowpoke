@@ -9,5 +9,5 @@ download() {
 }
 
 echo "updating vendor code..."
-download https://raw.githubusercontent.com/philsquared/Catch/master/single_include/catch.hpp catch.hpp
+download https://raw.githubusercontent.com/catchorg/Catch2/master/single_include/catch2/catch.hpp catch.hpp
 echo "done."

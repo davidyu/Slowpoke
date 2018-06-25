@@ -1,6 +1,8 @@
 #include "metallic.h"
 #include "scene.h"
 
+using namespace gml;
+
 Color Metallic::shade( Scene * scene, gml::Ray ray, Vec3 pt, Vec3 normal, VirtualTracer * vt, VirtualTracerContext ctx ) {
     Vec3 rdir = ray.direction - 2 * dot( ray.direction, normal ) * normal;
     Color reflection = transparent_black;

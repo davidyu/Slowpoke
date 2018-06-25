@@ -1,15 +1,15 @@
 #pragma once
 
 #include "object.h"
-#include "collision.hpp"
+#include "collision.h"
 
 namespace rt {
     class Plane : public Object {
     private:
-        Vec3 normal;
+        gml::Vec3 normal;
 
     public:
-        Plane( Vec3 point, Vec3 _normal, Material * mat )
+        Plane( gml::Vec3 point, gml::Vec3 _normal, Material * mat )
              : Object( point, mat )
              , normal( _normal )
         {}
@@ -17,11 +17,11 @@ namespace rt {
         ~Plane() {}
 
         inline gml::Plane toGMLPlane() {
-            return gml::Plane( normal, Vec3( transform.tx, transform.ty, transform.tz ) );
+            return gml::Plane( normal, gml::Vec3( transform.tx, transform.ty, transform.tz ) );
         }
 
-        inline bool intersects( gml::Ray r, float& t, Vec3& pt, Vec3& normal ) override {
-            return gml::Collision::IntersectRayPlane( r, toGMLPlane(), t, pt, normal );
+        inline bool intersects( gml::Ray r, float& t, gml::Vec3& pt, gml::Vec3& normal ) override {
+            return gml::IntersectRayPlane( r, toGMLPlane(), t, pt, normal );
         }
     };
 }

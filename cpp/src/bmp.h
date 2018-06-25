@@ -2,7 +2,7 @@
 
 #include "stdint.h"
 #include <string>
-#include "color.hpp"
+#include "color.h"
 
 struct BMPINFOHEADER {
     uint32_t Size = sizeof( BMPINFOHEADER );
@@ -38,5 +38,5 @@ public:
     ~BMP();
 
     void Write( std::string path );
-    void SetPixel( int x, int y, Color color );
+    void SetPixel( int x, int y, gml::Color color );
 };

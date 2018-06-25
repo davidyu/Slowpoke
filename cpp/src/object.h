@@ -1,18 +1,18 @@
 #pragma once
 
-#include "Mat.hpp"
-#include "primitives.hpp"
+#include "matrix.h"
+#include "primitives.h"
 
 #include "material.h"
 
 class Object {
 public:
-    Mat4 transform;
+    gml::Mat4 transform;
     Material * mat;
 
-    Object( Vec3 pos, Material * _mat )
+    Object( gml::Vec3 pos, Material * _mat )
         : mat( _mat )
-        , transform( identity<4>() )
+        , transform( gml::identity<4>() )
     {
         transform.tx = pos.x;
         transform.ty = pos.y;
@@ -25,5 +25,5 @@ public:
         }
     }
 
-    virtual bool intersects( gml::Ray r, float& t, Vec3& pt, Vec3& normal ) = 0;
+    virtual bool intersects( gml::Ray r, float& t, gml::Vec3& pt, gml::Vec3& normal ) = 0;
 };

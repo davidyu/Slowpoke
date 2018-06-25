@@ -4,9 +4,9 @@
 
 class Lambertian: public Material {
 public:
-    Lambertian( Color _albedo )
+    Lambertian( gml::Color _albedo )
         : Material( _albedo )
     {}
 
-    Color shade( Scene * scene, gml::Ray ray, Vec3 pt, Vec3 normal, VirtualTracer * tracer, VirtualTracerContext ctx ) override;
+    gml::Color shade( Scene * scene, gml::Ray ray, gml::Vec3 pt, gml::Vec3 normal, VirtualTracer * tracer, VirtualTracerContext ctx ) override;
 };

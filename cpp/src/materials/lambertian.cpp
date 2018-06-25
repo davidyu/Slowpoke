@@ -1,6 +1,8 @@
 #include "lambertian.h"
 #include "scene.h"
 
+using namespace gml;
+
 Color Lambertian::shade( Scene * scene, gml::Ray ray, Vec3 pt, Vec3 normal, VirtualTracer * vt, VirtualTracerContext ctx ) {
     Color GI = transparent_black;
     for ( auto i = 0; i < ctx.nGISamples; i++ ) {

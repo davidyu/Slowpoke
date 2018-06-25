@@ -1,7 +1,7 @@
 #pragma once
 
 #include "object.h"
-#include "collision.hpp"
+#include "collision.h"
 
 namespace rt {
     class Sphere : public Object {
@@ -9,7 +9,7 @@ namespace rt {
         float radius;
 
     public:
-        Sphere( Vec3 center, float _radius, Material * mat )
+        Sphere( gml::Vec3 center, float _radius, Material * mat )
             : Object( center, mat )
             , radius( _radius )
         {}
@@ -17,11 +17,11 @@ namespace rt {
         ~Sphere() {}
 
         inline gml::Sphere toGMLSphere() {
-            return gml::Sphere( Vec3( transform.tx, transform.ty, transform.tz ), radius );
+            return gml::Sphere( gml::Vec3( transform.tx, transform.ty, transform.tz ), radius );
         }
 
-        inline bool intersects( gml::Ray r, float& t, Vec3& pt, Vec3& normal ) override {
-            return gml::Collision::IntersectRaySphere( r, toGMLSphere(), t, pt, normal );
+        inline bool intersects( gml::Ray r, float& t, gml::Vec3& pt, gml::Vec3& normal ) override {
+            return gml::IntersectRaySphere( r, toGMLSphere(), t, pt, normal );
         }
     };
 }

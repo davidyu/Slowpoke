@@ -29,7 +29,7 @@ void BMP::Write( std::string path ) {
     out.close();
 }
 
-void BMP::SetPixel( int x, int y, Color color ) {
+void BMP::SetPixel( int x, int y, gml::Color color ) {
     int pos = 3 * ( x + y * InfoHeader.Width );
 
     // recall that bitmap data is actually flipped when stored on disk

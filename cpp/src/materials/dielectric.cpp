@@ -1,6 +1,8 @@
 #include "dielectric.h"
 #include "scene.h"
 
+using namespace gml;
+
 Color Dielectric::shade( Scene * scene, gml::Ray ray, Vec3 pt, Vec3 normal, VirtualTracer * vt, VirtualTracerContext ctx ) {
     Vec3 outwardNormal;
     float n1, n2;

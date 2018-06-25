@@ -2,7 +2,7 @@
 
 #include "camera.h"
 #include "scene.h"
-#include "vec.hpp"
+#include "vector.h"
 #include "virtualtracer.h"
 
 struct TracerParams {
@@ -24,8 +24,8 @@ public:
 
     ~Tracer() {}
 
-    Color trace( gml::Ray ray, uint8 bouncesRemaining ) override;
-    Color trace( const Vec2& uv, const Vec2& pixelSize, uint8 bouncesRemaining );
+    gml::Color trace( gml::Ray ray, uint8 bouncesRemaining ) override;
+    gml::Color trace( const gml::Vec2& uv, const gml::Vec2& pixelSize, uint8 bouncesRemaining );
 
-    Color envmap( gml::Ray ray );
+    gml::Color envmap( gml::Ray ray );
 };
