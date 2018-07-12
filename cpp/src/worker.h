@@ -12,7 +12,8 @@ public:
     Worker( struct WorkParams params );
 
     virtual void StartWork();
-    virtual void WaitUntilFinished();
+    virtual void WaitUntilFinished(); // blocking wait
+    virtual void DoWork();            // call this if you are manually polling IsDone() -- IE: if ( !worker->IsDone() ) { worker->DoWork(); }
 
     virtual ~Worker() {}
 

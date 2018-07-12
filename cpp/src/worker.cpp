@@ -57,9 +57,10 @@ Worker::Worker( struct WorkParams params )
 // StartWork()
 void Worker::StartWork() {
     finished_ = false;
-
     bmp_ = new BMP( params_.w, params_.h );
+}
 
+void Worker::DoWork() {
     Vec2 uv;
     const Vec2 pixel_size = { 1.f / params_.w, 1.f / params_.h };
     for ( int y = 0; y < params_.h; y++ ) {
@@ -78,5 +79,6 @@ void Worker::StartWork() {
 }
 
 void Worker::WaitUntilFinished() {
-    // do nothing, work is done after StartWork() returns
+    // DoWork() is blocking and we are finished when it returns, so no need to wrap it in a while loop
+    DoWork();
 }
