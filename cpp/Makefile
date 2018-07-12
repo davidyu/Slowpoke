@@ -21,7 +21,9 @@ FORCE_INCLUDE=-include rtstd.h
 .cxx.o: 
 		$(CC) $(CFLAGS) $(INCLUDE) -c -o $*.o $<
 
-ALL.O = src/bmp.o src/main.o src/tracer.o\
+# this is necessary! Because it allows Make to understand which files need to be rebuilt
+# for ray...
+ALL.O = src/bmp.o src/main.o src/tracer.o src/worker.o\
 		src/materials/lambertian.o src/materials/metallic.o src/materials/dielectric.o\
 		src/gml/src/matrix.o src/gml/src/collision.o
 

@@ -14,6 +14,8 @@
 #include "metallic.h"
 #include "dielectric.h"
 
+#include "worker.h"
+
 using namespace gml;
 
 const int NUM_THREADS = 4;
@@ -24,7 +26,7 @@ struct AppParams {
     BMP *                bmp = NULL;
     int                  w = 0;
     int                  h = 0;
-    bool                 singleThreaded = false;
+    bool                 singleThreaded = true;
     bool                 useJobs = true;
     // for jobs use only
     bool                 allJobsQueued = false;
@@ -33,6 +35,7 @@ struct AppParams {
     pthread_cond_t       jobQueueAvailable;
 };
 
+// static
 AppParams params;
 
 void * renderTile( void * t ) {
@@ -86,6 +89,7 @@ int main( int argc, char **argv ) {
     if ( argc > 1 ) {
         char * mode = argv[1];
         if ( strcmp( mode, "server" ) == 0 ) {
+            // 
             printf( "STUB server mode.\n" );
         } else if ( strcmp( mode, "client" ) == 0 ) {
             printf( "STUB client mode.\n" );
@@ -134,16 +138,19 @@ int main( int argc, char **argv ) {
                 // params.rt.scene.objects.push_back( &pl );
                 // params.rt.scene.objects.push_back( &pr );
 
+                Worker * worker;
+
+                struct WorkParams work_params;
+                
+                work_params.bounces = 4;
+                work_params.w = w;
+                work_params.h = h;
+
                 if ( params.singleThreaded ) {
-                    Vec2 uv;
-                    const Vec2 pixelSize = { 1.f / params.w, 1.f / params.h };
-                    for ( int y = 0; y < params.h; y++ ) {
-                        for ( int x = 0; x < params.w; x++ ) {
-                            uv.x = (float) x / params.w;
-                            uv.y = (float) y / params.h;
-                            params.bmp->SetPixel( x, y, degamma( params.rt.trace( uv, pixelSize, params.numBounces ) ) );
-                        }
-                    }
+                    worker = new Worker( work_params );
+                    worker->StartWork();
+                    worker->WaitUntilFinished();
+                    params.bmp = worker->GetOutput();
                 } else { // multithreaded
                     pthread_t threads[ NUM_THREADS ];
 
@@ -187,6 +194,7 @@ int main( int argc, char **argv ) {
                 }
 
                 params.bmp->Write( "hello.bmp" );
+                // worker will be automatically reclaimed by the OS when we exit, so no need to manually call delete
                 // params.bmp will be automatically reclaimed by the OS when we exit, so no need to delete
             } else {
                 printf( "usage: ray local width height\n" );
